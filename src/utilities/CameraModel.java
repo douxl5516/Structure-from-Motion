@@ -81,7 +81,7 @@ public class CameraModel {
 						Calib3d.drawChessboardCorners(view_gray, board_size, image_points_buf, false);
 
 						// 展示棋盘格角点搜索结果
-						// new ImageUI(view_gray, "Camera Calibration").imshow().waitKey(500);
+						//new ImageUI(view_gray, "Camera Calibration").imshow().waitKey(0);
 					}
 				} else {
 					break;
