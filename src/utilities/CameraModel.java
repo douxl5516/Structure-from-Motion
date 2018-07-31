@@ -30,6 +30,9 @@ public class CameraModel {
 	List<Mat> image_points_seq; // 保存检测到的所有角点
 	int count; // 保存检测到的角点个数
 	String result_path; // 计算结果存储的路径
+	
+	Mat cameraMatrix;	//相机内参矩阵
+	Mat distCoeffs;	//相机畸变系数
 
 	/**
 	 * 构造函数，初始化相机标定参数
@@ -106,9 +109,9 @@ public class CameraModel {
 		Size square_size = new Size(10, 10);	// 实际测量得到的标定板上每个棋盘格的大小
 		List<Mat> object_points=new ArrayList<Mat>();	// 保存标定板上角点的三维坐标
 		// 内外参数
-		Mat cameraMatrix = new Mat(3, 3, CvType.CV_32FC1, Scalar.all(0));	// 摄像机内参数矩阵
+		cameraMatrix = new Mat(3, 3, CvType.CV_32FC1, Scalar.all(0));	// 摄像机内参数矩阵
 		List<Integer> point_counts=new ArrayList<Integer>();  // 每幅图像中角点的数量  
-		Mat distCoeffs = new Mat(1, 5, CvType.CV_32FC1, Scalar.all(0));	// 摄像机的5个畸变系数：k1,k2,p1,p2,k3
+		distCoeffs = new Mat(1, 5, CvType.CV_32FC1, Scalar.all(0));	// 摄像机的5个畸变系数：k1,k2,p1,p2,k3
 		List<Mat> tvecsMat=new ArrayList<Mat>();	// 每幅图像的旋转向量
 		List<Mat> rvecsMat=new ArrayList<Mat>();	// 每幅图像的平移向量
 		// 初始化标定板上角点的三维坐标
@@ -166,5 +169,13 @@ public class CameraModel {
 		}catch(IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public Mat getCameraMatrix() {
+		return cameraMatrix;
+	}
+
+	public Mat getDistCoeffs() {
+		return distCoeffs;
 	}
 }

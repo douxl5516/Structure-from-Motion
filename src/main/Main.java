@@ -9,6 +9,7 @@ import org.opencv.core.Mat;
 
 import tool.ImageUI;
 import tool.UI;
+import type.ImageData;
 import utilities.CameraModel;
 
 public class Main {
@@ -22,13 +23,13 @@ public class Main {
 	private static final String CALIB_LIST_FILE_NAME = "L:\\workspaces\\CVdata\\zhang_calib\\calibdata.txt";
 
 	public static void main(String[] args) {
-		Mat lastImage;
+		Mat lastImage = new Mat();
 		List<Mat> imageList = new ArrayList<Mat>();
+		List<ImageData> imageDataList = new ArrayList<ImageData>();
 
-		UI.getMatListFromVideo(VIDEO_FILE_NAME, SKIP_FRAME_NUMBER, imageList);
-		lastImage = imageList.get(imageList.size() - 1);
+		UI.getMatListFromVideo(VIDEO_FILE_NAME, SKIP_FRAME_NUMBER, imageList,lastImage);
 
-		CameraModel cm=new CameraModel(CALIB_LIST_FILE_NAME);
+		CameraModel cm = new CameraModel(CALIB_LIST_FILE_NAME);
 		
 		/*
 		展示读取出来的图片

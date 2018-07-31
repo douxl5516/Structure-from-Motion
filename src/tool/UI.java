@@ -14,8 +14,7 @@ public class UI {
 	 * @param frameRate 间隔多少帧取一张图像
 	 * @param imageList 返回获取到的帧的列表，存入imageList 
 	 */
-	public static void getMatListFromVideo(String filePath,int frameRate,List<Mat> imageList){
-		Mat lastImage=new Mat();
+	public static void getMatListFromVideo(String filePath,int frameRate,List<Mat> imageList,Mat lastImage){
 		try {
 			VideoCapture capture = new VideoCapture(filePath);// 读取视频 
 			if (!capture.isOpened()) {
