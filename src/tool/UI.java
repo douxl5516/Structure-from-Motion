@@ -10,6 +10,7 @@ public class UI {
 	
 	/**
 	 * 	从视频读取固定间隔帧数的图片，并加入最后一帧，返回List<Mat>
+	 * 
 	 * @param filePath 视频的存储路径
 	 * @param frameRate 间隔多少帧取一张图像
 	 * @param imageList 返回获取到的帧的列表，存入imageList 

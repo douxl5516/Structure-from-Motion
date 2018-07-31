@@ -11,6 +11,7 @@ import tool.ImageUI;
 import tool.UI;
 import type.ImageData;
 import utilities.CameraModel;
+import utilities.Reconstruction;
 
 public class Main {
 
@@ -29,7 +30,9 @@ public class Main {
 
 		UI.getMatListFromVideo(VIDEO_FILE_NAME, SKIP_FRAME_NUMBER, imageList,lastImage);
 
-		CameraModel cm = new CameraModel(CALIB_LIST_FILE_NAME);
+		//CameraModel cm = new CameraModel(CALIB_LIST_FILE_NAME);
+		
+		Reconstruction.extractFeatures(imageList, imageDataList);
 		
 		/*
 		展示读取出来的图片

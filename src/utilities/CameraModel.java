@@ -171,10 +171,20 @@ public class CameraModel {
 		}
 	}
 	
+	/**
+	 * getter函数，获取相机内参矩阵
+	 * 
+	 * @return cameraMatrix 相机内参矩阵
+	 */
 	public Mat getCameraMatrix() {
 		return cameraMatrix;
 	}
 
+	/**
+	 * getter函数，获取相机畸变参数矩阵
+	 * 
+	 * @return cameraMatrix 相机畸变参数矩阵
+	 */
 	public Mat getDistCoeffs() {
 		return distCoeffs;
 	}

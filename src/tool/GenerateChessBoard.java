@@ -6,6 +6,10 @@ import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 
 public class GenerateChessBoard {
+	
+	/**
+	 * 产生用于相机标定的棋盘格
+	 */
 	public static void generateChessBoard() {
 		int perBoardPixel = 100;
 		Size boardSize=new Size(8,6);
@@ -32,6 +36,6 @@ public class GenerateChessBoard {
 	            }
 	        }
 	    }
-	    new ImageUI(image,"abc").imshow();
+	    new ImageUI(image,"chess board").imshow();
 	}
 }
