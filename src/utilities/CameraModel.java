@@ -15,7 +15,7 @@ import org.opencv.core.TermCriteria;
 import org.opencv.highgui.Highgui;
 import org.opencv.imgproc.Imgproc;
 
-import tool.ImageUI;
+import type.Types;
 
 import org.opencv.calib3d.Calib3d;
 
@@ -147,20 +147,20 @@ public class CameraModel {
 		//保存定标结果      
 		Mat rotation_matrix = new Mat(3, 3, CvType.CV_32FC1, Scalar.all(0));	//保存每幅图像的旋转矩阵
 		try {
-			fout.write("相机内参数矩阵："+System.getProperty("line.separator"));
-			fout.write(cameraMatrix.dump()+System.getProperty("line.separator"));
-			fout.write("畸变系数："+System.getProperty("line.separator"));
-			fout.write(distCoeffs.dump()+System.getProperty("line.separator"));
+			fout.write("相机内参数矩阵："+Types.NEW_LINE);
+			fout.write(cameraMatrix.dump()+Types.NEW_LINE);
+			fout.write("畸变系数："+Types.NEW_LINE);
+			fout.write(distCoeffs.dump()+Types.NEW_LINE);
 			for (int i = 0; i<image_count; i++)
 			{
-				fout.write("第"+(i + 1)+"幅图像的旋转向量："+System.getProperty("line.separator"));
-				fout.write(tvecsMat.get(i).dump()+System.getProperty("line.separator"));
+				fout.write("第"+(i + 1)+"幅图像的旋转向量："+Types.NEW_LINE);
+				fout.write(tvecsMat.get(i).dump()+Types.NEW_LINE);
 				// 将旋转向量转换为相对应的旋转矩阵
 				Calib3d.Rodrigues(tvecsMat.get(i), rotation_matrix);
-				fout.write("第"+(i + 1) +"幅图像的旋转矩阵："+System.getProperty("line.separator"));
-				fout.write(rotation_matrix.dump()+System.getProperty("line.separator"));
-				fout.write("第"+(i + 1)+"幅图像的平移向量："+System.getProperty("line.separator"));
-				fout.write(rvecsMat.get(i).dump()+System.getProperty("line.separator"));
+				fout.write("第"+(i + 1) +"幅图像的旋转矩阵："+Types.NEW_LINE);
+				fout.write(rotation_matrix.dump()+Types.NEW_LINE);
+				fout.write("第"+(i + 1)+"幅图像的平移向量："+Types.NEW_LINE);
+				fout.write(rvecsMat.get(i).dump()+Types.NEW_LINE);
 			}
 			System.out.println("标定结果已存储");
 			fin.close();

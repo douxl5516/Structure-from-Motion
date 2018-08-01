@@ -47,7 +47,7 @@ public class Reconstruction {
 	 * @param train 输入的一张待匹配图片的信息
 	 */
 	public static MatchInfo matchFeatures(ImageData query,ImageData train) {
-		DescriptorMatcher matcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE_HAMMING);
+		DescriptorMatcher matcher = DescriptorMatcher.create(DescriptorMatcher.FLANNBASED);
         MatOfDMatch matches = new MatOfDMatch();
         matcher.match(query.getDescriptors(),train.getDescriptors(),matches);
         List<DMatch> matchesList = matches.toList();
@@ -65,7 +65,7 @@ public class Reconstruction {
         kp2.fromList(points2);
         Mat inliner = new Mat();
         Mat F = Calib3d.findHomography(kp1,kp2,Calib3d.FM_RANSAC,3,inliner); //求解出的inliner是图片上的变换矩阵
-//        Mat F = Calib3d.findFundamentalMat(kp1,kp2,Calib3d.FM_RANSAC,3,0.99, inliner);	//求解出的inliner是基础矩阵
+//      Mat F = Calib3d.findFundamentalMat(kp1,kp2,Calib3d.FM_RANSAC,3,0.99, inliner);	//求解出的inliner是基础矩阵
         List<Byte> isInliner = new ArrayList<>();
         Converters.Mat_to_vector_uchar(inliner,isInliner);
         LinkedList<DMatch> good_matches = new LinkedList<>();
