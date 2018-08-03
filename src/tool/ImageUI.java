@@ -67,13 +67,14 @@ public class ImageUI extends JPanel implements KeyListener {
     public void paintComponent(Graphics g) {  
             g.drawImage(out, 0, 0, null);   
         }
-    public void imshow(){
+    public ImageUI imshow(){
         if(firstPaint){
             jframe.setVisible(true); 
             firstPaint = false;
             }
         Mat2BufIm();
         this.repaint();
+        return this;
     }
 
     //Elements for waitKey.
@@ -102,10 +103,6 @@ public class ImageUI extends JPanel implements KeyListener {
     }
     @Override
     public void keyPressed(KeyEvent e) {
-        // TODO Auto-generated method stub
-//      System.out.println(e.getKeyChar() + ", " + e.getKeyCode()
-//                + ", " + KeyEvent.getKeyText(e.getKeyCode())
-//                + ", isActionKey: " + e.isActionKey());
         synchronized(mt){
             mt.notifyAll();
         }
