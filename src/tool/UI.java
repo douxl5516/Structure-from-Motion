@@ -23,7 +23,7 @@ public class UI {
 		try {
 			VideoCapture capture = new VideoCapture(filePath);// 读取视频
 			if (!capture.isOpened()) {
-				throw new Exception("视频文件打开失败。");
+				throw new Exception("视频文件打开失败,请检查ffmpeg.dll。");
 			} else {
 				Mat current_image = new Mat();
 				int count = 0;

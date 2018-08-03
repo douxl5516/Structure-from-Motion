@@ -6,6 +6,7 @@ import java.util.List;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 
+import tool.ImageUI;
 import tool.UI;
 import type.ImageData;
 import type.MatchInfo;
@@ -28,8 +29,8 @@ public class Main {
 		List<Mat> imageList = new ArrayList<Mat>();
 		List<ImageData> imageDataList = new ArrayList<ImageData>();
 
-		//UI.getMatListFromVideo(VIDEO_FILE_NAME, SKIP_FRAME_NUMBER, imageList,lastImage);
-		UI.getMatListFromImgList(IMG_LIST_FILE_NAME, imageList, lastImage);
+		UI.getMatListFromVideo(VIDEO_FILE_NAME, SKIP_FRAME_NUMBER, imageList,lastImage);
+		//UI.getMatListFromImgList(IMG_LIST_FILE_NAME, imageList, lastImage);
 		
 		CameraModel cm = new CameraModel(CALIB_LIST_FILE_NAME);
 		
@@ -40,24 +41,24 @@ public class Main {
 		
 		System.out.println(cloud.dump());
 		
-//		for(int i=0;i<imageDataList.size();i++) {
-//			for(int j=i+1;j<imageDataList.size();j++) {
-//				MatchInfo mi=Reconstruction.matchFeatures(imageDataList.get(i),imageDataList.get(j));
-//				System.out.println(mi.toString());
-//			}
-//		}
+		for(int i=0;i<imageDataList.size();i++) {
+			for(int j=i+1;j<imageDataList.size();j++) {
+				MatchInfo mi=Reconstruction.matchFeatures(imageDataList.get(i),imageDataList.get(j));
+				System.out.println(mi.toString());
+			}
+		}
 		
-		/*
-		展示读取出来的图片
-		for (Mat m : imageList) {
-			System.out.println(m.size());
-			ImageUI i = new ImageUI(m, "1");
+		
+		//展示读取出来的图片
+		for (Mat m1 : imageList) {
+			System.out.println(m1.size());
+			ImageUI i = new ImageUI(m1, "1");
 			i.imshow();
 			i.waitKey(0);
 		}
 		ImageUI s = new ImageUI(lastImage, "last");
 		s.imshow();
-		s.waitKey(0);*/
+		s.waitKey(0);
 	}
 
 }
