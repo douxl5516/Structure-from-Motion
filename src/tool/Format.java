@@ -6,12 +6,16 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.LinkedList;
 
 import javax.imageio.ImageIO;
 
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
-import org.opencv.highgui.Highgui;
+import org.opencv.core.MatOfPoint3f;
+import org.opencv.core.Point3;
+import org.opencv.imgcodecs.Imgcodecs;
 
 public class Format {
 	
@@ -67,7 +71,7 @@ public class Format {
     public static BufferedImage Mat2BufferedImage (Mat matrix, String fileExtension) {
         // convert the matrix into a matrix of bytes appropriate for this file extension
         MatOfByte mob = new MatOfByte();
-        Highgui.imencode(fileExtension, matrix, mob);
+        Imgcodecs.imencode(fileExtension, matrix, mob);
         // convert the "matrix of bytes" into a byte array
         byte[] byteArray = mob.toArray();
         BufferedImage bufImage = null;
@@ -79,4 +83,25 @@ public class Format {
         }
         return bufImage;
     }
+    
+    /**
+     * Mat转化为MatOfPoint3f
+     * @param m 待转化的Mat
+     * @return 转化后的MatOfPoint3f
+     */
+    public static MatOfPoint3f Mat2MatOfPoint3f(Mat m) {
+		MatOfPoint3f points = new MatOfPoint3f();
+		LinkedList<Point3> ptlist = new LinkedList<>();
+		Point3 pt = new Point3();
+		Mat doubleM = new Mat();
+		m.convertTo(doubleM, CvType.CV_64F);
+		for (int i = 0; i < m.height(); i++) {
+			double[] tmp = new double[3];
+			doubleM.get(0, 0, tmp);
+			pt.set(tmp);
+			ptlist.add(pt);
+		}
+		points.fromList(ptlist);
+		return points;
+	}
 }

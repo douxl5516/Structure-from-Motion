@@ -2,9 +2,9 @@ package type;
 
 import java.util.List;
 
+import org.opencv.core.DMatch;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfDMatch;
-import org.opencv.features2d.DMatch;
 
 public class MatchInfo {
     private MatOfDMatch matches;

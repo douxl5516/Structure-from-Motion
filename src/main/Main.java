@@ -33,14 +33,19 @@ public class Main {
 		
 		CameraModel cm = new CameraModel(CALIB_LIST_FILE_NAME);
 		
+		Reconstruction r=new Reconstruction(cm.getCameraMatrix());
 		Reconstruction.extractFeatures(imageList, imageDataList);
+		MatchInfo m=Reconstruction.matchFeatures(imageDataList.get(0),imageDataList.get(1));
+		Mat cloud=r.InitPointCloud(imageDataList.get(0),imageDataList.get(1), m.getMatches(), imageList.get(1));
 		
-		for(int i=0;i<imageDataList.size();i++) {
-			for(int j=i+1;j<imageDataList.size();j++) {
-				MatchInfo mi=Reconstruction.matchFeatures(imageDataList.get(i),imageDataList.get(j));
-				System.out.println(mi.toString());
-			}
-		}
+		System.out.println(cloud.dump());
+		
+//		for(int i=0;i<imageDataList.size();i++) {
+//			for(int j=i+1;j<imageDataList.size();j++) {
+//				MatchInfo mi=Reconstruction.matchFeatures(imageDataList.get(i),imageDataList.get(j));
+//				System.out.println(mi.toString());
+//			}
+//		}
 		
 		/*
 		展示读取出来的图片
