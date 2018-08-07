@@ -1,7 +1,5 @@
 # Camera Position Reckoning based on SfM
 
-[TOC]
-
 ## 目标
 实现基于SfM算法的，以目标拍摄效果为导向的相机位置反演系统。
 

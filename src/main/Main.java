@@ -6,7 +6,6 @@ import java.util.List;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 
-import tool.ImageUI;
 import tool.UI;
 import type.ImageData;
 import type.MatchInfo;
@@ -29,36 +28,26 @@ public class Main {
 		List<Mat> imageList = new ArrayList<Mat>();
 		List<ImageData> imageDataList = new ArrayList<ImageData>();
 
-		UI.getMatListFromVideo(VIDEO_FILE_NAME, SKIP_FRAME_NUMBER, imageList,lastImage);
-		//UI.getMatListFromImgList(IMG_LIST_FILE_NAME, imageList, lastImage);
-		
+		// 从视频或图像列表读取图像
+		UI.getMatListFromVideo(VIDEO_FILE_NAME, SKIP_FRAME_NUMBER, imageList);
+		lastImage = imageList.get(imageList.size() - 1);
+		// UI.getMatListFromImgList(IMG_LIST_FILE_NAME, imageList, lastImage);
+
+		// 展示读取出来的图片
+		// for (Mat img : imageList) new ImageUI(img,"images").imshow().waitKey(0);
+		// new ImageUI(lastImage,"last one").imshow().waitKey(0);
+
+		// 相机标定
 		CameraModel cm = new CameraModel(CALIB_LIST_FILE_NAME);
-		
-		Reconstruction r=new Reconstruction(cm.getCameraMatrix());
+
+		// 三维重建
+		Reconstruction r = new Reconstruction(cm.getCameraMatrix());
 		Reconstruction.extractFeatures(imageList, imageDataList);
-		MatchInfo m=Reconstruction.matchFeatures(imageDataList.get(0),imageDataList.get(1));
-		Mat cloud=r.InitPointCloud(imageDataList.get(0),imageDataList.get(1), m.getMatches(), imageList.get(1));
-		
+		MatchInfo m = Reconstruction.matchFeatures(imageDataList.get(0), imageDataList.get(1));
+		Mat cloud = r.InitPointCloud(imageDataList.get(0), imageDataList.get(1), m.getMatches(), imageList.get(1));
+
 		System.out.println(cloud.dump());
-		
-		for(int i=0;i<imageDataList.size();i++) {
-			for(int j=i+1;j<imageDataList.size();j++) {
-				MatchInfo mi=Reconstruction.matchFeatures(imageDataList.get(i),imageDataList.get(j));
-				System.out.println(mi.toString());
-			}
-		}
-		
-		
-		//展示读取出来的图片
-		for (Mat m1 : imageList) {
-			System.out.println(m1.size());
-			ImageUI i = new ImageUI(m1, "1");
-			i.imshow();
-			i.waitKey(0);
-		}
-		ImageUI s = new ImageUI(lastImage, "last");
-		s.imshow();
-		s.waitKey(0);
+
 	}
 
 }
