@@ -45,7 +45,7 @@ public class Main {
 		Reconstruction.extractFeatures(imageList, imageDataList);
 		MatchInfo m = Reconstruction.matchFeatures(imageDataList.get(0), imageDataList.get(1));
 		Mat cloud = r.InitPointCloud(imageDataList.get(0), imageDataList.get(1), m.getMatches(), imageList.get(1));
-
+		
 		System.out.println(cloud.dump());
 
 	}

@@ -30,26 +30,26 @@ import org.opencv.features2d.FeatureDetector;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.utils.Converters;
 
+
 import tool.Format;
 import type.ImageData;
 import type.MatchInfo;
 
 public class Reconstruction {
 
-	private Mat cameraMat = new Mat(3, 3, CvType.CV_64F);
+	private Mat cameraMat = new Mat(3, 3, CvType.CV_64F);	//相机内参
 	private Mat pointCloud;
 	private Mat color;
 	private ArrayList<int[]> correspondence_idx = new ArrayList<>();
-	private Mat LastP;	//最后一张图像的外参矩阵
-	private final float scale = 1.0f / 256.0f;
+	private Mat LastP; // 最后一张图像的外参矩阵
+	private final float scale = 1 / 256;
 
-	
 	public Reconstruction(Mat cameraMat) {
-		this.cameraMat=cameraMat;
+		this.cameraMat = cameraMat;
 	}
-	
+
 	/**
-	 * 提取特征点函数
+	 * 特征点提取函数
 	 * 
 	 * @param imgList     输入Mat的列表，对其中每一张图片进行特征点提取
 	 * @param imgDataList 输出提取数据的列表，包含图片的特征点、特征点描述子和颜色
@@ -89,8 +89,8 @@ public class Reconstruction {
 		kp1.fromList(points1);
 		kp2.fromList(points2);
 		Mat inliner = new Mat();
-//		Mat F = Calib3d.findHomography(kp1, kp2, Calib3d.FM_RANSAC, 3, inliner, 0, 0); // 求解出的inliner是图片上的变换矩阵
-		Mat F = Calib3d.findFundamentalMat(kp1,kp2,Calib3d.FM_RANSAC,3,0.99, inliner);	//求解出的inliner是基础矩阵
+		Mat F = Calib3d.findHomography(kp1, kp2, Calib3d.FM_RANSAC, 3, inliner, 30, 0.99); // 求解出的inliner是图片上的变换矩阵
+//		Mat F = Calib3d.findFundamentalMat(kp1, kp2, Calib3d.FM_RANSAC, 3, 0.99, inliner); // 求解出的inliner是基础矩阵
 		List<Byte> isInliner = new ArrayList<>();
 		Converters.Mat_to_vector_uchar(inliner, isInliner);
 		LinkedList<DMatch> good_matches = new LinkedList<>();
@@ -110,16 +110,17 @@ public class Reconstruction {
 	 * @param left  第一幅图像的相关信息
 	 * @param right 第二幅图像的相关信息
 	 * @param gm    匹配点对DMatch列表
-	 * @param img
-	 * @return
+	 * @param img   提供点云颜色的图像
+	 * @return 返回空间点云
 	 */
 	public Mat InitPointCloud(ImageData left, ImageData right, MatOfDMatch gm, Mat img) {
 		color = new Mat(gm.toList().size(), 1, CvType.CV_32FC3);
 		MatOfKeyPoint leftPoint = left.getKeyPoint(); // 左图关键点列表
 		MatOfKeyPoint rightPoint = right.getKeyPoint(); // 右图关键点列表
-		Mat em;
+		Mat em; // EssentialMat：本质矩阵，是平移量t叉乘旋转矩阵R的结果
 		Mat rot2 = new Mat(3, 3, CvType.CV_64F); // 旋转矩阵
 		Mat t2 = new Mat(3, 1, CvType.CV_64F); // 平移矩阵
+
 		LinkedList<Point> ptlist1 = new LinkedList<>();
 		LinkedList<Point> ptlist2 = new LinkedList<>();
 		MatOfPoint2f kp1 = new MatOfPoint2f();
@@ -128,14 +129,16 @@ public class Reconstruction {
 		int[] right_idx = new int[rightPoint.height()];
 		Arrays.fill(left_idx, -1);
 		Arrays.fill(right_idx, -1);
+
 		for (int i = 0; i < gm.toList().size(); i++) {
 			ptlist1.addLast(leftPoint.toList().get(gm.toList().get(i).queryIdx).pt); // 第i对匹配点中左图中的点坐标
 			ptlist2.addLast(rightPoint.toList().get(gm.toList().get(i).trainIdx).pt); // 第i对匹配点中右图中的点坐标
 			left_idx[gm.toList().get(i).queryIdx] = i; // 左图特征点对应的匹配点对索引
 			right_idx[gm.toList().get(i).trainIdx] = i; // 左图特征点对应的匹配点对索引
-			int y = (int) rightPoint.toList().get(gm.toList().get(i).trainIdx).pt.y;	//第i对匹配点中右图的点坐标
-			int x = (int) rightPoint.toList().get(gm.toList().get(i).trainIdx).pt.x;
-			double[] tmp = img.get(y, x);
+
+			// 取第i对匹配点中右图的点坐标作为颜色的取值
+			Point pt = rightPoint.toList().get(gm.toList().get(i).trainIdx).pt;
+			double[] tmp = img.get((int) pt.y, (int) pt.x);
 			tmp[0] *= scale;
 			tmp[1] *= scale;
 			tmp[2] *= scale;
@@ -210,7 +213,6 @@ public class Reconstruction {
 				tmp[0] *= scale;
 				tmp[1] *= scale;
 				tmp[2] *= scale;
-				tmp[3] *= scale;
 				Mat dummy = new Mat(1, 1, CvType.CV_32FC4);
 				color.push_back(dummy);
 				count++;
