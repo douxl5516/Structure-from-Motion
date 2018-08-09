@@ -1,10 +1,13 @@
 package main;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfDouble;
 
 import tool.UI;
 import type.ImageData;
@@ -38,15 +41,19 @@ public class Main {
 		// new ImageUI(lastImage,"last one").imshow().waitKey(0);
 
 		// 相机标定
-		CameraModel cm = new CameraModel(CALIB_LIST_FILE_NAME);
+		// CameraModel cm = new CameraModel(CALIB_LIST_FILE_NAME);
+		CameraModel cm=new CameraModel(new MatOfDouble(2759.48,0,1520.69,0,2764.16,1006.81,0,0,1).reshape(1,3));
 
 		// 三维重建
 		Reconstruction r = new Reconstruction(cm.getCameraMatrix());
 		Reconstruction.extractFeatures(imageList, imageDataList);
 		MatchInfo m = Reconstruction.matchFeatures(imageDataList.get(0), imageDataList.get(1));
 		Mat cloud = r.InitPointCloud(imageDataList.get(0), imageDataList.get(1), m.getMatches(), imageList.get(1));
-		
 		System.out.println(cloud.dump());
+		for(int i=1;i<imageDataList.size()-1;i++) {
+			System.out.println(r.addImage(imageDataList.get(i), imageDataList.get(i+1), Reconstruction.matchFeatures(imageDataList.get(i), imageDataList.get(i+1)).getMatches(), imageList.get(i+1)).dump());
+		}
+		
 
 	}
 

@@ -1,9 +1,5 @@
 package utilities;
 
-import static org.opencv.calib3d.Calib3d.Rodrigues;
-import static org.opencv.calib3d.Calib3d.findEssentialMat;
-import static org.opencv.calib3d.Calib3d.solvePnPRansac;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -213,7 +209,7 @@ public class Reconstruction {
 				tmp[0] *= scale;
 				tmp[1] *= scale;
 				tmp[2] *= scale;
-				Mat dummy = new Mat(1, 1, CvType.CV_32FC4);
+				Mat dummy = new Mat(1, 1, CvType.CV_32FC3);
 				color.push_back(dummy);
 				count++;
 			}
@@ -223,10 +219,10 @@ public class Reconstruction {
 		Mat rotvec = new Mat(3, 1, CvType.CV_64F);
 		Mat rot = new Mat(3, 3, CvType.CV_64F);
 		Mat t = new Mat(3, 1, CvType.CV_64F);
-		solvePnPRansac(pc, kp2, cameraMat, new MatOfDouble(), rotvec, t);
+		Calib3d.solvePnPRansac(pc, kp2, cameraMat, new MatOfDouble(), rotvec, t);
 		kp1.fromList(leftlist);
 		kp2.fromList(rightist);
-		Rodrigues(rotvec, rot);
+		Calib3d.Rodrigues(rotvec, rot);
 		Mat P = computeProjMat(cameraMat, rot, t);
 		Mat pc_raw = new Mat();
 		Calib3d.triangulatePoints(LastP, P, kp1, kp2, pc_raw);

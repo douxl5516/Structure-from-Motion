@@ -32,6 +32,7 @@
 - [佛像图片数据集](https://github.com/alicevision/dataset_buddha)
 - [SfM_quality_evaluation（含相机内参和重建结果）](https://github.com/alicevision/SfM_quality_evaluation)
 - [Middlebury数据集（含相机内参和重建结果）](http://vision.middlebury.edu/mview/data/)
+- [ComputerVisionDatasets(最全最多)](https://github.com/AIBluefisher/ComputerVisionDatasets)
 
 ## 三维重建点云效果的查看 
 - [C++ PCL库:PCLVisualizer](http://docs.pointclouds.org/trunk/classpcl_1_1visualization_1_1_p_c_l_visualizer.html)

@@ -31,12 +31,50 @@ public class CameraModel {
 	int count; // 保存检测到的角点个数
 	String result_path; // 计算结果存储的路径
 
-	Mat cameraMatrix; // 相机内参矩阵
+	Mat cameraMatrix=new Mat(); // 相机内参矩阵
 	// {|f_x 0 c_x||0 f_y c_y||0 0 1|}
 
-	Mat distCoeffs; // 相机畸变系数
+	Mat distCoeffs=new Mat(); // 相机畸变系数
 	// (k_1, k_2, p_1, p_2[, k_3[, k_4, k_5, k_6]])
 
+	
+	public CameraModel(Mat cameraMatrix) {
+		try {
+			if(cameraMatrix.size().equals(new Size(3,3))) {
+				this.cameraMatrix=cameraMatrix.clone();
+			}
+			else {
+				throw new Exception("提供的相机内参矩阵不为3*3");
+			}
+		}catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * 构造函数，直接提供已知的相机内参和畸变系数
+	 * 
+	 * @param cameraMatrix 相机内参
+	 * @param distCoeffs 畸变系数
+	 */
+	public CameraModel(Mat cameraMatrix,Mat distCoeffs) {
+		try {
+			if(cameraMatrix.size().equals(new Size(3,3))) {
+				this.cameraMatrix=cameraMatrix.clone();
+			}
+			else {
+				throw new Exception("提供的相机内参矩阵不为3*3");
+			}
+			if(distCoeffs.width()==1&&distCoeffs.height()>=4) {
+				this.distCoeffs=distCoeffs.clone();
+			}else {
+				throw new Exception("提供的相机畸变系数矩阵格式不正确");
+			}
+		}catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
 	/**
 	 * 构造函数，初始化相机标定参数
 	 * 
@@ -94,10 +132,8 @@ public class CameraModel {
 				}
 			}
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -140,8 +176,7 @@ public class CameraModel {
 			point_counts.add(new Integer((int) (board_size.width * board_size.height)));
 		}
 		// 开始标定
-		Calib3d.calibrateCamera(object_points, image_points_seq, image_size, cameraMatrix, distCoeffs, rvecsMat,
-				tvecsMat, 0);
+		Calib3d.calibrateCamera(object_points, image_points_seq, image_size, cameraMatrix, distCoeffs, rvecsMat,tvecsMat, 0);
 		System.out.println("标定完成");
 
 		// 保存标定结果
