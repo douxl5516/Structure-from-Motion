@@ -34,3 +34,4 @@
 
 ## 待实现想法
 - 根据[清晰度评价方法](https://blog.csdn.net/dcrmg/article/details/53543341)，提供目标函数，从输入视频中选取最清晰的图片。
+- 特征点检测及匹配效果不佳，需要实现SIFT及RANSAC算法。
