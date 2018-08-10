@@ -56,9 +56,8 @@ public class UI {
 	 * 
 	 * @param filePath  图像列表的存储路径
 	 * @param imageList 返回获取到的帧的列表，存入imageList
-	 * @param lastImage 最后一张图片
 	 */
-	public static void getMatListFromImgList(String filePath, List<Mat> imageList, Mat lastImage) {
+	public static void getMatListFromImgList(String filePath, List<Mat> imageList) {
 		try {
 			BufferedReader fin = new BufferedReader(new FileReader(filePath));
 			while (true) {
