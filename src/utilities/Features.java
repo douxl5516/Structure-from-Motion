@@ -13,7 +13,7 @@ import org.opencv.core.MatOfDMatch;
 import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
-import org.opencv.features2d.DescriptorExtractor;
+import org.opencv.features2d.*;
 import org.opencv.features2d.DescriptorMatcher;
 import org.opencv.features2d.FeatureDetector;
 import org.opencv.imgproc.Imgproc;
@@ -81,11 +81,9 @@ public class Features {
 		MatOfPoint2f kp2 = new MatOfPoint2f();
 		kp1.fromList(points1);
 		kp2.fromList(points2);
-		
 		Mat inliner = new Mat();
 //		Mat F = Calib3d.findHomography(kp1, kp2, Calib3d.FM_RANSAC, 3, inliner, 30, 0.99); // 求解出的inliner是图片上的变换矩阵
 		Mat F = Calib3d.findFundamentalMat(kp1, kp2, Calib3d.FM_RANSAC, 3, 0.99, inliner); // 求解出的inliner是基础矩阵
-		System.out.println(F.dump());
 		List<Byte> isInliner = new ArrayList<>();
 		Converters.Mat_to_vector_uchar(inliner, isInliner);
 		LinkedList<DMatch> good_matches = new LinkedList<>();

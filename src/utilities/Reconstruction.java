@@ -18,6 +18,8 @@ import org.opencv.core.MatOfPoint3f;
 import org.opencv.core.Point;
 import org.opencv.core.Point3;
 import org.opencv.core.Scalar;
+import org.opencv.features2d.Features2d;
+import org.opencv.imgcodecs.Imgcodecs;
 
 import tool.Format;
 import type.ImageData;
@@ -32,11 +34,29 @@ public class Reconstruction {
 	private Mat LastP; // 最后一张图像的外参矩阵
 	private final float scale = 1 / 256;
 
-	public Reconstruction(Mat cameraMat, List<Mat> imageList, List<ImageData> imageDataList,List<MatchInfo> matchesList) {
+	public Reconstruction(Mat cameraMat, List<Mat> imageList, List<ImageData> imageDataList,
+			List<MatchInfo> matchesList) {
 		this.cameraMat = cameraMat;
-		Features.extractFeatures(imageList, imageDataList);
 		Features.matchFeatures(imageDataList, matchesList);
+
+		// 存储匹配结果
+//		for(int i=0;i<matchesList.size();i++) {
+//			Mat outImg=new Mat();
+//			Features2d.drawMatches(
+//					imageList.get(i),
+//					imageDataList.get(i).getKeyPoint(),
+//					imageList.get(i+1),
+//					imageDataList.get(i).getKeyPoint(),
+//					matchesList.get(i).getMatches(),
+//					outImg);
+//			Imgcodecs.imwrite("output\\result_of_matches"+i+".jpg", outImg);
+//		}
+		
 		InitStructure(imageDataList.get(0), imageDataList.get(1), matchesList.get(0).getMatches(), imageList.get(1));
+		for(int i=1;i<matchesList.size();i++) {
+			addImage(imageDataList.get(i),imageDataList.get(i+1),matchesList.get(i).getMatches(),imageList.get(i+1));
+		}
+		System.out.println(pointCloud.dump());
 	}
 
 	/**
@@ -64,8 +84,8 @@ public class Reconstruction {
 		int[] right_idx = new int[rightPoint.height()];
 		Arrays.fill(left_idx, -1);
 		Arrays.fill(right_idx, -1);
-		
-		//获取匹配点对并建立索引
+
+		// 获取匹配点对并建立索引
 		for (int i = 0; i < gm.toList().size(); i++) {
 			ptlist1.addLast(leftPoint.toList().get(gm.toList().get(i).queryIdx).pt);
 			ptlist2.addLast(rightPoint.toList().get(gm.toList().get(i).trainIdx).pt);
@@ -84,8 +104,8 @@ public class Reconstruction {
 		correspondence_idx.add(right_idx);
 		kp1.fromList(ptlist1);
 		kp2.fromList(ptlist2);
-		em = Calib3d.findEssentialMat(kp1, kp2);//获取本征矩阵
-		Calib3d.recoverPose(em, kp1, kp2, rot2, t2);//分解本征矩阵，获取相对变换
+		em = Calib3d.findEssentialMat(kp1, kp2);// 获取本征矩阵
+		Calib3d.recoverPose(em, kp1, kp2, rot2, t2);// 分解本征矩阵，获取相对变换
 		Mat rot1 = Mat.eye(3, 3, CvType.CV_64F);
 		Mat t1 = Mat.zeros(3, 1, CvType.CV_64F);
 		Mat P1 = computeProjMat(cameraMat, rot1, t1);
@@ -113,7 +133,6 @@ public class Reconstruction {
 		Core.gemm(K, RT.t(), 1, new Mat(), 0, Proj, 0);
 		double test[] = new double[12];
 		Proj.get(0, 0, test);
-		System.out.println(Proj.dump());
 		return Proj;
 	}
 
@@ -134,7 +153,7 @@ public class Reconstruction {
 	}
 
 	/**
-	 * (未用到)
+	 * 向点云中添加一副图片
 	 * 
 	 * @param left
 	 * @param right
@@ -199,37 +218,62 @@ public class Reconstruction {
 	/**
 	 * 计算两张图片之间的旋转矩阵和平移矩阵(未用到)
 	 * 
-	 * @param K    相机内参矩阵
-	 * @param p1   关键点列表1
-	 * @param p2   关键点列表2
-	 * @param R    计算结果，旋转矩阵
-	 * @param T    计算结果，平移矩阵
-	 * @param mask mask中大于零的点代表匹配点，等于零代表失配点
+	 * @param K              相机内参矩阵
+	 * @param matOfKeyPoint  关键点列表1
+	 * @param matOfKeyPoint2 关键点列表2
+	 * @param R              计算结果，旋转矩阵
+	 * @param T              计算结果，平移矩阵
+	 * @param mask           mask中大于零的点代表匹配点，等于零代表失配点
 	 * @return 返回boolean值，是否检测成功
 	 */
-	private boolean find_transform(Mat K, MatOfPoint p1, MatOfPoint p2, Mat R, Mat T, Mat mask) {
+	private boolean find_transform(Mat K, MatOfKeyPoint matOfKeyPoint1, MatOfKeyPoint matOfKeyPoint2, Mat R, Mat T,
+			Mat mask) {
 		// 根据内参矩阵获取相机的焦距和光心坐标
+		System.out.println(matOfKeyPoint1.size());
+		System.out.println(matOfKeyPoint2.size());
 		double focal_length = 0.5 * (K.get(0, 0)[0] + K.get(1, 1)[0]);
 		Point principle_point = new Point(K.get(0, 2)[0], K.get(1, 2)[0]);
 		// 根据匹配点求取本征矩阵，使用RANSAC，进一步排除失配点
-		Mat E = Calib3d.findEssentialMat(p1, p2, focal_length, principle_point, Calib3d.FM_RANSAC, 0.999, 1.0, mask);
+		Mat E = Calib3d.findEssentialMat(matOfKeyPoint1, matOfKeyPoint2, focal_length, principle_point,
+				Calib3d.FM_RANSAC, 0.999, 1.0, mask);
 		if (E.empty()) {
 			return false;
 		}
 		int feasible_count = Core.countNonZero(mask);
-		System.out.println(feasible_count + " -in- " + p1.height());
+		System.out.println(feasible_count + " -in- " + matOfKeyPoint1.height());
 		// 对于RANSAC而言，outlier数量大于50%时，结果是不可靠的
-		if (feasible_count <= 15 || (feasible_count / p1.height()) < 0.6)
+		if (feasible_count <= 15 || (feasible_count / matOfKeyPoint1.height()) < 0.6)
 			return false;
 		// 分解本征矩阵，获取相对变换
-		int pass_count = Calib3d.recoverPose(E, p1, p2, R, T, focal_length, principle_point, mask);
+		int pass_count = Calib3d.recoverPose(E, matOfKeyPoint1, matOfKeyPoint2, R, T, focal_length, principle_point,
+				mask);
 		// 同时位于两个相机前方的点的数量要足够大
 		if (((double) pass_count) / feasible_count < 0.7) {
 			return false;
 		}
 		return true;
 	}
-	
+
+	void reconstruct(Mat K, Mat R, Mat T, MatOfPoint2f p1, MatOfPoint2f p2, Mat structure) {
+		// 两个相机的投影矩阵[R T]，triangulatePoints只支持float型
+		Mat proj1 = new Mat(3, 4, CvType.CV_32FC1);
+		Mat proj2 = new Mat(3, 4, CvType.CV_32FC1);
+
+		proj1.colRange(0, 3).setTo(Mat.eye(3, 3, CvType.CV_32FC1));
+		proj1.col(3).setTo(Mat.zeros(3, 1, CvType.CV_32FC1));
+
+		R.convertTo(proj2.colRange(0, 3), CvType.CV_32FC1);
+		T.convertTo(proj2.col(3), CvType.CV_32FC1);
+
+		Mat fK = new Mat();
+		K.convertTo(fK, CvType.CV_32FC1);
+		proj1 = fK.mul(proj1);
+		proj2 = fK.mul(proj2);
+
+		// 三角化重建
+		Calib3d.triangulatePoints(proj1, proj2, p1, p2, structure);
+	}
+
 	public Mat getPointCloud() {
 		return pointCloud;
 	}
