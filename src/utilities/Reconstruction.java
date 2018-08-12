@@ -47,7 +47,7 @@ public class Reconstruction {
 					imageList.get(i + 1));
 			System.out.println("点云size:" + pointCloud.size());
 		}
-		System.out.println(pointCloud.dump());
+//		System.out.println(pointCloud.dump());
 	}
 
 	/**
@@ -163,9 +163,9 @@ public class Reconstruction {
 	 * @return
 	 */
 	public Mat addImage(ImageData left, ImageData right, MatOfDMatch gm, Mat img) {
-		MatOfPoint3f pc3f = Format.Mat2MatOfPoint3f(pointCloud);
-		MatOfKeyPoint leftPoint = left.getKeyPoint();
-		MatOfKeyPoint rightPoint = right.getKeyPoint();
+		MatOfPoint3f pc3f = Format.Mat2MatOfPoint3f(pointCloud); // 点云Point3f
+		MatOfKeyPoint leftPoint = left.getKeyPoint(); // 左图原关键点列表
+		MatOfKeyPoint rightPoint = right.getKeyPoint(); // 右图原关键点列表
 		LinkedList<Point3> pclist = new LinkedList<>();
 		LinkedList<Point> right_inPC = new LinkedList<>();
 		LinkedList<Point> leftlist = new LinkedList<>();
@@ -173,7 +173,7 @@ public class Reconstruction {
 		MatOfPoint3f pc = new MatOfPoint3f();
 		MatOfPoint2f kp1 = new MatOfPoint2f();
 		MatOfPoint2f kp2 = new MatOfPoint2f();
-		int count = pointCloud.height();
+		int count = pointCloud.height(); // 点云点数
 		int[] left_idx = correspondence_idx.get(correspondence_idx.size() - 1);
 		int[] right_idx = new int[rightPoint.height()];
 		Arrays.fill(right_idx, -1);
@@ -210,6 +210,9 @@ public class Reconstruction {
 		Mat P = computeProjMat(cameraMat, rot, t);
 		Mat pc_raw = new Mat();
 		Calib3d.triangulatePoints(LastP, P, kp1, kp2, pc_raw);
+
+		System.out.println(pc_raw.dump());
+
 		Mat new_PC = divideLast(pc_raw);
 		pointCloud.push_back(new_PC);
 		LastP = P.clone();
