@@ -19,11 +19,12 @@ public class UI {
 	 * @param imageList 返回获取到的帧的列表，存入imageList
 	 * @param lastImage 最后一张图片
 	 */
-	public static void getMatListFromVideo(String filePath, int frameRate, List<Mat> imageList, Mat lastImage) {
+	public static void getMatListFromVideo(String filePath, int frameRate, List<Mat> imageList) {
+		Mat lastImage=new Mat();
 		try {
 			VideoCapture capture = new VideoCapture(filePath);// 读取视频
 			if (!capture.isOpened()) {
-				throw new Exception("视频文件打开失败,请检查ffmpeg.dll。");
+				throw new Exception("视频文件打开失败,请检查ffmpeg.dll");
 			} else {
 				Mat current_image = new Mat();
 				int count = 0;
@@ -55,9 +56,8 @@ public class UI {
 	 * 
 	 * @param filePath  图像列表的存储路径
 	 * @param imageList 返回获取到的帧的列表，存入imageList
-	 * @param lastImage 最后一张图片
 	 */
-	public static void getMatListFromImgList(String filePath, List<Mat> imageList, Mat lastImage) {
+	public static void getMatListFromImgList(String filePath, List<Mat> imageList) {
 		try {
 			BufferedReader fin = new BufferedReader(new FileReader(filePath));
 			while (true) {

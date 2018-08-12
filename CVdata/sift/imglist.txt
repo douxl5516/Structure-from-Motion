@@ -1,0 +1,2 @@
+CVdata/sift/sift_5_1.jpg
+CVdata/sift/sift_5_2.jpg

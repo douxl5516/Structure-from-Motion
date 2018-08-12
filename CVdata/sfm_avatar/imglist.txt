@@ -1,0 +1,7 @@
+CVdata/sfm_avatar/0000.JPG
+CVdata/sfm_avatar/0001.JPG
+CVdata/sfm_avatar/0002.JPG
+CVdata/sfm_avatar/0003.JPG
+CVdata/sfm_avatar/0004.JPG
+CVdata/sfm_avatar/0005.JPG
+CVdata/sfm_avatar/0006.JPG

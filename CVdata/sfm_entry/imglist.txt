@@ -1,0 +1,10 @@
+CVdata/sfm_entry/images/0000.jpg
+CVdata/sfm_entry/images/0001.jpg
+CVdata/sfm_entry/images/0002.jpg
+CVdata/sfm_entry/images/0003.jpg
+CVdata/sfm_entry/images/0004.jpg
+CVdata/sfm_entry/images/0005.jpg
+CVdata/sfm_entry/images/0006.jpg
+CVdata/sfm_entry/images/0007.jpg
+CVdata/sfm_entry/images/0008.jpg
+CVdata/sfm_entry/images/0009.jpg
