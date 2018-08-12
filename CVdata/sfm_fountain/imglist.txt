@@ -1,11 +1,4 @@
-CVdata/sfm_fountain/0000.jpg
-CVdata/sfm_fountain/0001.jpg
-CVdata/sfm_fountain/0002.jpg
 CVdata/sfm_fountain/0003.jpg
 CVdata/sfm_fountain/0004.jpg
 CVdata/sfm_fountain/0005.jpg
 CVdata/sfm_fountain/0006.jpg
-CVdata/sfm_fountain/0007.jpg
-CVdata/sfm_fountain/0008.jpg
-CVdata/sfm_fountain/0009.jpg
-CVdata/sfm_fountain/0010.jpg

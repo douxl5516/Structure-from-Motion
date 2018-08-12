@@ -20,7 +20,6 @@ import org.opencv.imgproc.Imgproc;
 import org.opencv.utils.Converters;
 
 import type.ImageData;
-import type.MatchInfo;
 
 public class Features {
 	/**
@@ -32,6 +31,7 @@ public class Features {
 	public static void extractFeatures(List<Mat> imageList, List<ImageData> imageDataList) {
 		for (int i = 0; i < imageList.size(); i++) {
 			ImageData temp = detectFeature(imageList.get(i));
+			System.out.println("第"+(i+1)+"张图像检测到"+temp.getKeyPoint().height()+"个特征点");
 			if (temp.getKeyPoint().height() < 10) {// 如果一张图片检测到的特征点数小于10，则舍弃
 				imageList.remove(i);
 				continue;
@@ -46,11 +46,12 @@ public class Features {
 	 * @param imageDataForAll 检测出的图片特征点描述子所在的列表
 	 * @param matchesForAll	计算出的匹配点列表
 	 */
-	public static void matchFeatures(List<ImageData> imageDataForAll,List<MatchInfo> matchesForAll) {
+	public static void matchFeatures(List<ImageData> imageDataForAll,List<MatOfDMatch> matchesForAll) {
 		matchesForAll.clear();
 		for (int i = 0; i < imageDataForAll.size() - 1; i++){
-			MatchInfo matches=null;
+			MatOfDMatch matches=null;
 			matches=matchFeatures(imageDataForAll.get(i), imageDataForAll.get(i+1));
+			System.out.println("第"+(i+1)+"与第"+(i+2)+"张图像检测出"+matches.height()+"个匹配点对");
 			matchesForAll.add(matches);
 		}
 	}
@@ -60,41 +61,38 @@ public class Features {
 	 * 
 	 * @param query 输入的一张待匹配图片的信息
 	 * @param train 输入的一张待匹配图片的信息
-	 * @return 返回两张图像的匹配结果MatchInfo
+	 * @return 返回两张图像的匹配结果MatOfDMatch
 	 */
-	public static MatchInfo matchFeatures(ImageData query, ImageData train) {
+	public static MatOfDMatch matchFeatures(ImageData query, ImageData train) {
 		DescriptorMatcher matcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE_HAMMING);
-		MatOfDMatch matches = new MatOfDMatch();
-		matcher.match(query.getDescriptors(), train.getDescriptors(), matches);
+		List<MatOfDMatch> knnmatches = new LinkedList<MatOfDMatch>();
+		List<DMatch> matchesList = new LinkedList<DMatch>();
+		matcher.knnMatch(query.getDescriptors(), train.getDescriptors(), knnmatches,2);
 		
-		List<DMatch> matchesList = matches.toList();
-		List<KeyPoint> kpList1 = query.getKeyPoint().toList();
-		List<KeyPoint> kpList2 = train.getKeyPoint().toList();
-		
-		LinkedList<Point> points1 = new LinkedList<>();
-		LinkedList<Point> points2 = new LinkedList<>();
-		for (int i = 0; i < matchesList.size(); i++) {
-			points1.addLast(kpList1.get(matchesList.get(i).queryIdx).pt);
-			points2.addLast(kpList2.get(matchesList.get(i).trainIdx).pt);
+		//获取满足Ratio Test的最小匹配的距离
+		double min_dist =Double.MAX_VALUE;
+		for (int r = 0; r < knnmatches.size(); r++){
+			//Ratio Test
+			if (knnmatches.get(r).toArray()[0].distance > 0.6*knnmatches.get(r).toArray()[1].distance)
+				continue;
+			double dist = knnmatches.get(r).toArray()[0].distance;
+			if (dist < min_dist) min_dist = dist;
 		}
-		MatOfPoint2f kp1 = new MatOfPoint2f();
-		MatOfPoint2f kp2 = new MatOfPoint2f();
-		kp1.fromList(points1);
-		kp2.fromList(points2);
-		Mat inliner = new Mat();
-//		Mat F = Calib3d.findHomography(kp1, kp2, Calib3d.FM_RANSAC, 3, inliner, 30, 0.99); // 求解出的inliner是图片上的变换矩阵
-		Mat F = Calib3d.findFundamentalMat(kp1, kp2, Calib3d.FM_RANSAC, 3, 0.99, inliner); // 求解出的inliner是基础矩阵
-		List<Byte> isInliner = new ArrayList<>();
-		Converters.Mat_to_vector_uchar(inliner, isInliner);
-		LinkedList<DMatch> good_matches = new LinkedList<>();
-		MatOfDMatch gm = new MatOfDMatch();
-		for (int i = 0; i < isInliner.size(); i++) {
-			if (isInliner.get(i) != 0) {
-				good_matches.addLast(matchesList.get(i));
-			}
+		matchesList.clear();
+		for (int r = 0; r < knnmatches.size(); r++)
+		{
+			//排除不满足Ratio Test的点和匹配距离过大的点
+			if (
+				knnmatches.get(r).toArray()[0].distance > 0.6*knnmatches.get(r).toArray()[1].distance ||
+				knnmatches.get(r).toArray()[0].distance > 5 * (min_dist>10.0f?min_dist:10.0f)
+				)
+				continue;
+			//保存匹配点
+			matchesList.add(knnmatches.get(r).toArray()[0]);
 		}
-		gm.fromList(good_matches);
-		return MatchInfo.newInstance(gm, F);
+		MatOfDMatch goodMatch=new MatOfDMatch();
+		goodMatch.fromList(matchesList);
+		return goodMatch;
 	}
 
 	/**
@@ -114,8 +112,8 @@ public class Features {
 		}
 
 		Mat img = new Mat(image.height(), image.width(), CvType.CV_8UC3); // 用于存储转化为BGR后的图像
-		FeatureDetector detector = FeatureDetector.create(FeatureDetector.ORB);
-		DescriptorExtractor extractor = DescriptorExtractor.create(DescriptorExtractor.ORB);
+		FeatureDetector detector = FeatureDetector.create(FeatureDetector.AKAZE);
+		DescriptorExtractor extractor = DescriptorExtractor.create(DescriptorExtractor.AKAZE);
 		MatOfKeyPoint keypoints = new MatOfKeyPoint();
 		Mat descriptors = new Mat();
 		Imgproc.cvtColor(image, img, Imgproc.COLOR_RGB2BGR, 3); // 转换为BGR彩色模式是为了效率考虑
@@ -139,7 +137,7 @@ public class Features {
 			if (channels == 3) {
 				color = new Mat(keyPoint.height(), 1, CvType.CV_32FC3);
 			} else {
-				throw new Exception("进行特征点检测的图像不是RGB。");
+				throw new Exception("进行特征点检测的图像不是RGB类型");
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

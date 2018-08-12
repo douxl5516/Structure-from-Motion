@@ -2,6 +2,7 @@ package main;
 
 import org.opencv.core.Core;
 import org.opencv.core.DMatch;
+//import org.opencv.core.DMatch;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfDMatch;
 import org.opencv.core.MatOfKeyPoint;
@@ -23,8 +24,8 @@ public class Test {
 		Imgproc.cvtColor(src_base, gray_base, Imgproc.COLOR_RGB2GRAY);
 		Imgproc.cvtColor(src_test, gray_test, Imgproc.COLOR_RGB2GRAY);
 		// 初始化ORB检测描述子
-		FeatureDetector featureDetector = FeatureDetector.create(FeatureDetector.ORB);//特别提示下这里opencv暂时不支持SIFT、SURF检测方法，这个好像是opencv(windows) java版的一个bug,本人在这里被坑了好久。
-		DescriptorExtractor descriptorExtractor = DescriptorExtractor.create(DescriptorExtractor.ORB);
+		FeatureDetector featureDetector = FeatureDetector.create(FeatureDetector.DYNAMIC_SIFT);//特别提示下这里opencv暂时不支持SIFT、SURF检测方法，这个好像是opencv(windows) java版的一个bug,本人在这里被坑了好久。
+		DescriptorExtractor descriptorExtractor = DescriptorExtractor.create(DescriptorExtractor.SIFT);
 		// 关键点及特征描述矩阵声明
 		MatOfKeyPoint keyPoint1 = new MatOfKeyPoint(), keyPoint2 = new MatOfKeyPoint();
 		Mat descriptorMat1 = new Mat(), descriptorMat2 = new Mat();
@@ -38,7 +39,7 @@ public class Test {
 		// 特征点匹配
 		System.out.println("test5：" + keyPoint1.size());
 		System.out.println("test3：" + keyPoint2.size());
-		if (!keyPoint1.size().empty() && !keyPoint2.size().empty()) {
+		if (!keyPoint1.empty() && !keyPoint2.empty()) {
 			// FlannBasedMatcher matcher = new FlannBasedMatcher();
 			DescriptorMatcher matcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE_L1);
 			MatOfDMatch matches = new MatOfDMatch();

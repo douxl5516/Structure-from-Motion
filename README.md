@@ -29,9 +29,8 @@
 
 ## 目前实现
 - 利用[张正友标定法](https://www.computer.org/csdl/trans/tp/2000/11/i1330-abs.html)，采用[ting2696/zhang-s-method](ting2696/zhang-s-method)的棋盘格数据集实现相机标定。（弃用）
-- 使用SIFT算法实现了特征点的提取和匹配
+- 使用AKAZE方法实现了效果较为良好的特征点提取及匹配
 - 实现了两张图像的三维重建，但精度不高。
 
 ## 待实现想法
 - 根据[清晰度评价方法](https://blog.csdn.net/dcrmg/article/details/53543341)，提供目标函数，从输入视频中选取最清晰的图片。
-- 特征点检测及匹配效果不佳，需要实现SIFT及RANSAC算法。

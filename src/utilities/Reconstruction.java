@@ -23,7 +23,6 @@ import org.opencv.imgcodecs.Imgcodecs;
 
 import tool.Format;
 import type.ImageData;
-import type.MatchInfo;
 
 public class Reconstruction {
 
@@ -34,28 +33,13 @@ public class Reconstruction {
 	private Mat LastP; // 最后一张图像的外参矩阵
 	private final float scale = 1 / 256;
 
-	public Reconstruction(Mat cameraMat, List<Mat> imageList, List<ImageData> imageDataList,
-			List<MatchInfo> matchesList) {
+	public Reconstruction(Mat cameraMat, List<Mat> imageList, List<ImageData> imageDataList,List<MatOfDMatch> matchesList) {
 		this.cameraMat = cameraMat;
-		Features.matchFeatures(imageDataList, matchesList);
-
-		// 存储匹配结果
-//		for(int i=0;i<matchesList.size();i++) {
-//			Mat outImg=new Mat();
-//			Features2d.drawMatches(
-//					imageList.get(i),
-//					imageDataList.get(i).getKeyPoint(),
-//					imageList.get(i+1),
-//					imageDataList.get(i).getKeyPoint(),
-//					matchesList.get(i).getMatches(),
-//					outImg);
-//			Imgcodecs.imwrite("output\\result_of_matches"+i+".jpg", outImg);
-//		}
 		
-		InitStructure(imageDataList.get(0), imageDataList.get(1), matchesList.get(0).getMatches(), imageList.get(1));
-		for(int i=1;i<matchesList.size();i++) {
-			addImage(imageDataList.get(i),imageDataList.get(i+1),matchesList.get(i).getMatches(),imageList.get(i+1));
-		}
+		InitStructure(imageDataList.get(0), imageDataList.get(1), matchesList.get(0), imageList.get(1));
+//		for(int i=1;i<matchesList.size();i++) {
+//			addImage(imageDataList.get(i),imageDataList.get(i+1),matchesList.get(i),imageList.get(i+1));
+//		}
 		System.out.println(pointCloud.dump());
 	}
 

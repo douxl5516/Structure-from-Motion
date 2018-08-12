@@ -20,27 +20,27 @@ import org.opencv.imgproc.Imgproc;
 import tool.ImageUI;
 import tool.UI;
 import type.ImageData;
-import type.MatchInfo;
 import utilities.CameraModel;
 import utilities.Features;
 import utilities.Reconstruction;
 
 public class Main {
-
 	static {
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 	}
 
 	private static final int SKIP_FRAME_NUMBER = 30;
 	private static final String VIDEO_FILE_NAME = "CVdata\\sfm\\sfm_1.mp4";
-	private static final String IMG_LIST_FILE_NAME = "CVdata\\sift\\imglist.txt";
+	private static final String IMG_LIST_FILE_NAME = "CVdata\\sfm_fountain\\imglist.txt";
+	//private static final String IMG_LIST_FILE_NAME = "CVdata\\sift\\imglist.txt";
 	private static final String CALIB_LIST_FILE_NAME = "CVdata\\zhang_calib\\calibdata.txt";
 
 	public static void main(String[] args) {
+
 		Mat lastImage = new Mat();
 		List<Mat> imageList = new LinkedList<Mat>();
 		List<ImageData> imageDataList = new LinkedList<ImageData>();
-		List<MatchInfo> matchesList = new LinkedList<MatchInfo>();
+		List<MatOfDMatch> matchesList = new LinkedList<MatOfDMatch>();
 
 		// 从视频或图像列表读取图像
 //		UI.getMatListFromVideo(VIDEO_FILE_NAME, SKIP_FRAME_NUMBER, imageList);	
@@ -58,12 +58,21 @@ public class Main {
 		// 特征点检测
 		Features.extractFeatures(imageList, imageDataList);
 
-		// 存储检测出的特征点
-//		for(int i=0;i<imageDataList.size();i++) {
-//			Mat out=new Mat();
-//			Features2d.drawKeypoints(imageList.get(i), imageDataList.get(i).getKeyPoint(), out);
-//			Imgcodecs.imwrite("output\\result_of_features_"+i+".jpg", out);
-//		}
+		// 存储检测结果
+		for (int i = 0; i < imageDataList.size(); i++) {
+			Mat out = new Mat();
+			Features2d.drawKeypoints(imageList.get(i), imageDataList.get(i).getKeyPoint(), out);
+			Imgcodecs.imwrite("output\\result_of_features_" + i + ".jpg", out);
+		}
+
+		// 特征点匹配
+		Features.matchFeatures(imageDataList, matchesList);
+		// 存储匹配结果
+		for (int i = 0; i < matchesList.size(); i++) {
+			Mat outImg = new Mat();
+			Features2d.drawMatches(imageList.get(i), imageDataList.get(i).getKeyPoint(), imageList.get(i + 1),imageDataList.get(i+1).getKeyPoint(), matchesList.get(i), outImg);
+			Imgcodecs.imwrite("output\\result_of_matches_" + i + ".jpg", outImg);
+		}
 
 		// 三维重建
 		Reconstruction r = new Reconstruction(cm.getCameraMatrix(), imageList, imageDataList, matchesList);
