@@ -20,6 +20,7 @@ import org.opencv.imgproc.Imgproc;
 import tool.ImageUI;
 import tool.UI;
 import type.ImageData;
+import type.MatchInfo;
 import utilities.CameraModel;
 import utilities.Features;
 import utilities.Reconstruction;
@@ -40,7 +41,7 @@ public class Main {
 		Mat lastImage = new Mat();
 		List<Mat> imageList = new LinkedList<Mat>();
 		List<ImageData> imageDataList = new LinkedList<ImageData>();
-		List<MatOfDMatch> matchesList = new LinkedList<MatOfDMatch>();
+		List<MatchInfo> matchesList = new LinkedList<MatchInfo>();
 
 		// 从视频或图像列表读取图像
 //		UI.getMatListFromVideo(VIDEO_FILE_NAME, SKIP_FRAME_NUMBER, imageList);	
@@ -52,8 +53,7 @@ public class Main {
 
 		// 相机标定
 //		CameraModel cm = new CameraModel(CALIB_LIST_FILE_NAME);
-		CameraModel cm = new CameraModel(
-				new MatOfDouble(2759.48, 0, 1520.69, 0, 2764.16, 1006.81, 0, 0, 1).reshape(1, 3));
+		CameraModel cm = new CameraModel(new MatOfDouble(2759.48, 0, 1520.69, 0, 2764.16, 1006.81, 0, 0, 1).reshape(1, 3));
 
 		// 特征点检测
 		Features.extractFeatures(imageList, imageDataList);
@@ -70,7 +70,7 @@ public class Main {
 		// 存储匹配结果
 		for (int i = 0; i < matchesList.size(); i++) {
 			Mat outImg = new Mat();
-			Features2d.drawMatches(imageList.get(i), imageDataList.get(i).getKeyPoint(), imageList.get(i + 1),imageDataList.get(i+1).getKeyPoint(), matchesList.get(i), outImg);
+			Features2d.drawMatches(imageList.get(i), imageDataList.get(i).getKeyPoint(), imageList.get(i + 1),imageDataList.get(i+1).getKeyPoint(), matchesList.get(i).getMatches(), outImg);
 			Imgcodecs.imwrite("output\\result_of_matches_" + i + ".jpg", outImg);
 		}
 

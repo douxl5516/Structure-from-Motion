@@ -8,6 +8,7 @@ import java.util.List;
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
+import org.opencv.core.DMatch;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfDMatch;
 import org.opencv.core.MatOfDouble;
@@ -23,23 +24,29 @@ import org.opencv.imgcodecs.Imgcodecs;
 
 import tool.Format;
 import type.ImageData;
+import type.MatchInfo;
 
 public class Reconstruction {
 
 	private Mat cameraMat = new Mat(3, 3, CvType.CV_64F); // 相机内参
 	private Mat pointCloud;
 	private Mat color;
-	private ArrayList<int[]> correspondence_idx = new ArrayList<>();
 	private Mat LastP; // 最后一张图像的外参矩阵
+	private ArrayList<int[]> correspondence_idx = new ArrayList<>();
+
 	private final float scale = 1 / 256;
 
-	public Reconstruction(Mat cameraMat, List<Mat> imageList, List<ImageData> imageDataList,List<MatOfDMatch> matchesList) {
+	public Reconstruction(Mat cameraMat, List<Mat> imageList, List<ImageData> imageDataList,
+			List<MatchInfo> matchesList) {
 		this.cameraMat = cameraMat;
-		
-		InitStructure(imageDataList.get(0), imageDataList.get(1), matchesList.get(0), imageList.get(1));
-//		for(int i=1;i<matchesList.size();i++) {
-//			addImage(imageDataList.get(i),imageDataList.get(i+1),matchesList.get(i),imageList.get(i+1));
-//		}
+
+		InitStructure(imageDataList.get(0), imageDataList.get(1), matchesList.get(0).getMatches(), imageList.get(1));
+		System.out.println("点云size:" + pointCloud.size());
+		for (int i = 1; i < matchesList.size(); i++) {
+			addImage(imageDataList.get(i), imageDataList.get(i + 1), matchesList.get(i).getMatches(),
+					imageList.get(i + 1));
+			System.out.println("点云size:" + pointCloud.size());
+		}
 		System.out.println(pointCloud.dump());
 	}
 
@@ -54,14 +61,15 @@ public class Reconstruction {
 	 */
 	public Mat InitStructure(ImageData left, ImageData right, MatOfDMatch gm, Mat img) {
 		color = new Mat(gm.toList().size(), 1, CvType.CV_32FC3);
-		MatOfKeyPoint leftPoint = left.getKeyPoint(); // 左图关键点列表
-		MatOfKeyPoint rightPoint = right.getKeyPoint(); // 右图关键点列表
-		Mat em; // EssentialMat：本质矩阵，是平移量t叉乘旋转矩阵R的结果
-		Mat rot2 = new Mat(3, 3, CvType.CV_64F); // 旋转矩阵
-		Mat t2 = new Mat(3, 1, CvType.CV_64F); // 平移矩阵
+		MatOfKeyPoint leftPoint = left.getKeyPoint(); // 原左图关键点列表
+		MatOfKeyPoint rightPoint = right.getKeyPoint(); // 原右图关键点列表
+		Mat rot1 = Mat.eye(3, 3, CvType.CV_64F); // 左图相机旋转矩阵
+		Mat t1 = Mat.zeros(3, 1, CvType.CV_64F); // 左图相机平移矩阵
+		Mat rot2 = new Mat(3, 3, CvType.CV_64F); // 右图相机旋转矩阵
+		Mat t2 = new Mat(3, 1, CvType.CV_64F); // 右图相机平移矩阵
 
-		LinkedList<Point> ptlist1 = new LinkedList<>();
-		LinkedList<Point> ptlist2 = new LinkedList<>();
+		LinkedList<Point> ptlist1 = new LinkedList<>(); // 经匹配后的左图特征点列表
+		LinkedList<Point> ptlist2 = new LinkedList<>(); // 经匹配后的右图特征点列表
 		MatOfPoint2f kp1 = new MatOfPoint2f();
 		MatOfPoint2f kp2 = new MatOfPoint2f();
 		int[] left_idx = new int[leftPoint.height()];
@@ -71,13 +79,14 @@ public class Reconstruction {
 
 		// 获取匹配点对并建立索引
 		for (int i = 0; i < gm.toList().size(); i++) {
-			ptlist1.addLast(leftPoint.toList().get(gm.toList().get(i).queryIdx).pt);
-			ptlist2.addLast(rightPoint.toList().get(gm.toList().get(i).trainIdx).pt);
-			left_idx[gm.toList().get(i).queryIdx] = i;
-			right_idx[gm.toList().get(i).trainIdx] = i;
+			DMatch match = gm.toList().get(i);
+			ptlist1.addLast(leftPoint.toList().get(match.queryIdx).pt);
+			ptlist2.addLast(rightPoint.toList().get(match.trainIdx).pt);
+			left_idx[match.queryIdx] = i;
+			right_idx[match.trainIdx] = i;
 
 			// 取第i对匹配点中右图的点坐标作为颜色的取值
-			Point pt = rightPoint.toList().get(gm.toList().get(i).trainIdx).pt;
+			Point pt = rightPoint.toList().get(match.trainIdx).pt;
 			double[] tmp = img.get((int) pt.y, (int) pt.x);
 			tmp[0] *= scale;
 			tmp[1] *= scale;
@@ -88,13 +97,21 @@ public class Reconstruction {
 		correspondence_idx.add(right_idx);
 		kp1.fromList(ptlist1);
 		kp2.fromList(ptlist2);
-		em = Calib3d.findEssentialMat(kp1, kp2);// 获取本征矩阵
-		Calib3d.recoverPose(em, kp1, kp2, rot2, t2);// 分解本征矩阵，获取相对变换
-		Mat rot1 = Mat.eye(3, 3, CvType.CV_64F);
-		Mat t1 = Mat.zeros(3, 1, CvType.CV_64F);
+
+		Mat E = Calib3d.findEssentialMat(kp1, kp2, cameraMat);
+		Calib3d.recoverPose(E, kp1, kp2, cameraMat, rot2, t2);
+
+		kp1.release();
+		kp2.release();
+		kp1.fromList(ptlist1);
+		kp2.fromList(ptlist1);
+
 		Mat P1 = computeProjMat(cameraMat, rot1, t1);
 		Mat P2 = computeProjMat(cameraMat, rot2, t2);
 		Mat pc_raw = new Mat();
+		System.out.println(rot2.dump());
+		System.out.println(t2.dump());
+
 		Calib3d.triangulatePoints(P1, P2, kp1, kp2, pc_raw);
 		pointCloud = divideLast(pc_raw);
 		LastP = P2.clone();
@@ -197,45 +214,6 @@ public class Reconstruction {
 		pointCloud.push_back(new_PC);
 		LastP = P.clone();
 		return pointCloud.clone();
-	}
-
-	/**
-	 * 计算两张图片之间的旋转矩阵和平移矩阵(未用到)
-	 * 
-	 * @param K              相机内参矩阵
-	 * @param matOfKeyPoint  关键点列表1
-	 * @param matOfKeyPoint2 关键点列表2
-	 * @param R              计算结果，旋转矩阵
-	 * @param T              计算结果，平移矩阵
-	 * @param mask           mask中大于零的点代表匹配点，等于零代表失配点
-	 * @return 返回boolean值，是否检测成功
-	 */
-	private boolean find_transform(Mat K, MatOfKeyPoint matOfKeyPoint1, MatOfKeyPoint matOfKeyPoint2, Mat R, Mat T,
-			Mat mask) {
-		// 根据内参矩阵获取相机的焦距和光心坐标
-		System.out.println(matOfKeyPoint1.size());
-		System.out.println(matOfKeyPoint2.size());
-		double focal_length = 0.5 * (K.get(0, 0)[0] + K.get(1, 1)[0]);
-		Point principle_point = new Point(K.get(0, 2)[0], K.get(1, 2)[0]);
-		// 根据匹配点求取本征矩阵，使用RANSAC，进一步排除失配点
-		Mat E = Calib3d.findEssentialMat(matOfKeyPoint1, matOfKeyPoint2, focal_length, principle_point,
-				Calib3d.FM_RANSAC, 0.999, 1.0, mask);
-		if (E.empty()) {
-			return false;
-		}
-		int feasible_count = Core.countNonZero(mask);
-		System.out.println(feasible_count + " -in- " + matOfKeyPoint1.height());
-		// 对于RANSAC而言，outlier数量大于50%时，结果是不可靠的
-		if (feasible_count <= 15 || (feasible_count / matOfKeyPoint1.height()) < 0.6)
-			return false;
-		// 分解本征矩阵，获取相对变换
-		int pass_count = Calib3d.recoverPose(E, matOfKeyPoint1, matOfKeyPoint2, R, T, focal_length, principle_point,
-				mask);
-		// 同时位于两个相机前方的点的数量要足够大
-		if (((double) pass_count) / feasible_count < 0.7) {
-			return false;
-		}
-		return true;
 	}
 
 	void reconstruct(Mat K, Mat R, Mat T, MatOfPoint2f p1, MatOfPoint2f p2, Mat structure) {
