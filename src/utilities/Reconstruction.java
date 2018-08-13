@@ -171,8 +171,6 @@ public class Reconstruction {
 		Calib3d.Rodrigues(rotvec, rot);
 		Mat P = computeProjMat(cameraMat, rot, t);
 		Mat pc_raw = new Mat();
-		System.out.println(LastP.dump());
-		System.out.println(P.dump());
 		Calib3d.triangulatePoints(LastP, P, kp1, kp2, pc_raw);
 		Mat new_PC = divideLast(pc_raw);
 		pointCloud.push_back(new_PC);
@@ -214,9 +212,8 @@ public class Reconstruction {
 		}
 		return pc.colRange(0, 3);
 	}
-
+	
 	public Mat getPointCloud() {
 		return pointCloud;
 	}
-
 }

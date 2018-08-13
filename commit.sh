@@ -1,3 +1,3 @@
 git add .
-git commit -m 'solvePnPRansac出现问题，匹配出现角度误差'
+git commit -m '新增了按照清晰度选取图像序列方法'
 git push -u origin dev

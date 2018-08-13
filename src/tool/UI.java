@@ -9,12 +9,14 @@ import java.util.List;
 
 import org.opencv.core.Mat;
 import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
+import org.opencv.video.Video;
 import org.opencv.videoio.VideoCapture;
 
 public class UI {
 
 	/**
-	 * 从视频读取固定间隔帧数的图片，并加入最后一帧，返回List<Mat>
+	 * 从视频读取固定间隔帧数的图片，返回List<Mat>
 	 * 
 	 * @param filePath  视频的存储路径
 	 * @param frameRate 间隔多少帧取一张图像
@@ -30,7 +32,6 @@ public class UI {
 			} else {
 				Mat current_image = new Mat();
 				int count = 0;
-				capture.read(current_image);
 				while (true) {
 					capture.read(current_image);
 					if (!current_image.empty()) {
@@ -42,6 +43,68 @@ public class UI {
 					} else {
 						if (count % frameRate != 1) {
 							imageList.add(lastImage);
+						}
+						capture.release();
+						break;
+					}
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * 从视频读取经过筛选后清晰度最高的图片，返回List<Mat>
+	 * 
+	 * @param filePath 视频文件存放路径
+	 * @param frameRate 每隔多少帧开始选取
+	 * @param sampleSize 选取照片的样本数量
+	 * @param imageList 返回的图像列表
+	 */
+	public static void getOptimalizedMatListFromVideo(String filePath, int frameRate,int sampleSize, List<Mat> imageList) {
+		if(sampleSize>frameRate) {
+			sampleSize=frameRate;
+		}
+		Mat lastImage=new Mat();
+		try {
+			VideoCapture capture = new VideoCapture(filePath);// 读取视频
+			if (!capture.isOpened()) {
+				throw new Exception("视频文件打开失败,请检查ffmpeg.dll");
+			} else {
+				int count=0;
+				Mat frame = new Mat();
+				List<ArrayList<Mat>> bufImgList=new ArrayList<ArrayList<Mat>>();
+				while (true) {
+					capture.read(frame);
+					L1:if (!frame.empty()) {
+						lastImage=frame.clone();
+						if (count % frameRate == 0) {
+							ArrayList<Mat> list=new ArrayList<Mat>();
+							for(int i=0;i<sampleSize;i++) {
+								list.add(frame);
+								capture.read(frame);
+								if(frame.empty()) {
+									bufImgList.add(list);
+									break L1;
+								}
+								lastImage=frame.clone();
+							}
+							bufImgList.add(list);
+						}
+					} else {
+						for(int i=0;i<bufImgList.size();i++) {
+							ArrayList<Mat> temp=bufImgList.get(i);
+							double maxSobel=0;
+							int index=0;
+							for(int j=0;j<temp.size();j++) {
+								double s=Optimalize.Sobel(temp.get(i));
+								if(s>maxSobel) {
+									index=j;
+									maxSobel=s;
+								}
+							}
+							imageList.add(temp.get(index));
 						}
 						capture.release();
 						break;

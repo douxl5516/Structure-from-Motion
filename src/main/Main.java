@@ -32,16 +32,17 @@ public class Main {
 
 //	private static final int SKIP_FRAME_NUMBER = 30;
 //	private static final String VIDEO_FILE_NAME = "CVdata\\sfm_1.mp4";
-//	private static final String IMG_LIST_FILE_NAME = "CVdata\\sfm_fountain\\imglist.txt";
+	private static final String IMG_LIST_FILE_NAME = "CVdata\\sfm_fountain\\imglist.txt";
 //	private static final String IMG_LIST_FILE_NAME = "CVdata\\sfm_entry\\imglist.txt";
 //	private static final String IMG_LIST_FILE_NAME = "CVdata\\sift\\imglist.txt";
 //	private static final String IMG_LIST_FILE_NAME = "CVdata\\sfm_dom\\imglist.txt";
-	private static final String IMG_LIST_FILE_NAME = "CVdata\\sfm_avatar\\imglist.txt";
+//	private static final String IMG_LIST_FILE_NAME = "CVdata\\sfm_avatar\\imglist.txt";
 //	private static final String CALIB_LIST_FILE_NAME = "CVdata\\zhang_calib\\calibdata.txt";
 
 	public static void main(String[] args) {
 
 		Mat lastImage = new Mat();
+		Mat perspectiveImage=new Mat();
 		List<Mat> imageList = new LinkedList<Mat>();
 		List<ImageData> imageDataList = new LinkedList<ImageData>();
 		List<MatchInfo> matchesList = new LinkedList<MatchInfo>();
@@ -79,6 +80,7 @@ public class Main {
 
 		// ÈýÎ¬ÖØ½¨
 		Reconstruction r = new Reconstruction(cm.getCameraMatrix(), imageList, imageDataList, matchesList);
-
+		
+		Imgproc.warpPerspective(lastImage,perspectiveImage, M, lastImage.size());
 	}
 }

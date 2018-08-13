@@ -25,6 +25,7 @@
 
 ## 关于投影变换
 - [CS全能扫描王](https://www.cnblogs.com/skyfsm/p/7324346.html)
+- [OpenCV Java 实现票据、纸张的四边形边缘检测与提取、摆正](https://www.cnblogs.com/josephkim/p/8319069.html)
 
 ## 数据集
 - [数据集](https://github.com/awesomedata/awesome-public-datasets)
