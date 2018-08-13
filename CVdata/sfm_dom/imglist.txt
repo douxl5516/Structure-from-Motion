@@ -1,0 +1,5 @@
+CVdata/sfm_dom/0000.JPG
+CVdata/sfm_dom/0001.JPG
+CVdata/sfm_dom/0002.JPG
+CVdata/sfm_dom/0003.JPG
+CVdata/sfm_dom/0004.JPG

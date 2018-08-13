@@ -13,16 +13,14 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfDMatch;
 import org.opencv.core.MatOfDouble;
 import org.opencv.core.MatOfKeyPoint;
-import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.MatOfPoint3f;
 import org.opencv.core.Point;
 import org.opencv.core.Point3;
 import org.opencv.core.Scalar;
-import org.opencv.features2d.Features2d;
-import org.opencv.imgcodecs.Imgcodecs;
 
 import tool.Format;
+import tool.UI;
 import type.ImageData;
 import type.MatchInfo;
 
@@ -42,12 +40,12 @@ public class Reconstruction {
 
 		InitStructure(imageDataList.get(0), imageDataList.get(1), matchesList.get(0).getMatches(), imageList.get(1));
 		System.out.println("点云size:" + pointCloud.size());
+//		System.out.println(pointCloud.dump());
 		for (int i = 1; i < matchesList.size(); i++) {
-			addImage(imageDataList.get(i), imageDataList.get(i + 1), matchesList.get(i).getMatches(),
-					imageList.get(i + 1));
+			addImage(imageDataList.get(i), imageDataList.get(i + 1), matchesList.get(i).getMatches(),imageList.get(i + 1));
 			System.out.println("点云size:" + pointCloud.size());
 		}
-//		System.out.println(pointCloud.dump());
+		UI.writePointCloud("output\\pointcloud.txt", pointCloud);
 	}
 
 	/**
@@ -55,11 +53,11 @@ public class Reconstruction {
 	 * 
 	 * @param left  第一幅图像的相关信息
 	 * @param right 第二幅图像的相关信息
-	 * @param gm    匹配点对DMatch列表
+	 * @param gm    图像序列中第一张和第二张图像匹配点对DMatch列表
 	 * @param img   提供点云颜色的图像
 	 * @return 返回空间点云
 	 */
-	public Mat InitStructure(ImageData left, ImageData right, MatOfDMatch gm, Mat img) {
+	private Mat InitStructure(ImageData left, ImageData right, MatOfDMatch gm, Mat img) {
 		color = new Mat(gm.toList().size(), 1, CvType.CV_32FC3);
 		MatOfKeyPoint leftPoint = left.getKeyPoint(); // 原左图关键点列表
 		MatOfKeyPoint rightPoint = right.getKeyPoint(); // 原右图关键点列表
@@ -109,12 +107,80 @@ public class Reconstruction {
 		Mat P1 = computeProjMat(cameraMat, rot1, t1);
 		Mat P2 = computeProjMat(cameraMat, rot2, t2);
 		Mat pc_raw = new Mat();
-		System.out.println(rot2.dump());
-		System.out.println(t2.dump());
-
 		Calib3d.triangulatePoints(P1, P2, kp1, kp2, pc_raw);
 		pointCloud = divideLast(pc_raw);
 		LastP = P2.clone();
+		return pointCloud.clone();
+	}
+
+	/**
+	 * 向点云中添加一副图片
+	 * 
+	 * @param left
+	 * @param right
+	 * @param gm
+	 * @param img
+	 * @return
+	 */
+	private Mat addImage(ImageData left, ImageData right, MatOfDMatch matches, Mat img) {
+		MatOfPoint3f pc3f = Format.Mat2MatOfPoint3f(pointCloud); // 原有的点云的Point3f
+		MatOfKeyPoint leftPoint = left.getKeyPoint(); // 左图原关键点列表
+		MatOfKeyPoint rightPoint = right.getKeyPoint(); // 右图原关键点列表
+		List<DMatch> matchesList=matches.toList();	//匹配点对列表
+		LinkedList<Point3> pclist = new LinkedList<>();	//新的点云列表
+		LinkedList<Point> right_inPC = new LinkedList<>(); //在点云中的右图的关键点列表
+		LinkedList<Point> leftlist = new LinkedList<>();//在匹配队列中的左图特征点
+		LinkedList<Point> rightist = new LinkedList<>();//在匹配队列中的右图特征点
+		MatOfPoint3f pc = new MatOfPoint3f();
+		MatOfPoint2f kp1 = new MatOfPoint2f();
+		MatOfPoint2f kp2 = new MatOfPoint2f();
+		int count = pointCloud.height(); // 点云点数
+		int[] left_idx = correspondence_idx.get(correspondence_idx.size() - 1); //最后一张图像的匹配索引
+		int[] right_idx = new int[rightPoint.height()];
+		Arrays.fill(right_idx, -1);
+		
+		for (int i = 0; i < matches.toList().size(); i++) {
+			DMatch match= matches.toList().get(i);
+			if(match.queryIdx>=left_idx.length) {
+				System.out.println(left_idx.length);
+				System.out.println(match.queryIdx);
+			}
+			if (left_idx[match.queryIdx] >= 0) { //如果新提供的匹配序列的左点在原有匹配序列中
+				pclist.addLast(pc3f.toList().get(left_idx[match.queryIdx]));//把原有点云中的该点添加到新的点云中
+				right_inPC.addLast(rightPoint.toList().get(match.trainIdx).pt);
+				right_idx[match.trainIdx] = left_idx[match.queryIdx];
+			} else {//如果新提供的匹配序列的左点不在原有匹配序列中
+				leftlist.addLast(leftPoint.toList().get(match.queryIdx).pt);
+				rightist.addLast(rightPoint.toList().get(match.trainIdx).pt);
+				left_idx[match.queryIdx] = count;
+				right_idx[match.trainIdx] = count;
+				Point pt = rightPoint.toList().get(match.trainIdx).pt;
+				double[] tmp = img.get((int)pt.y, (int)pt.x);
+				tmp[0] *= scale;
+				tmp[1] *= scale;
+				tmp[2] *= scale;
+				Mat dummy = new Mat(1, 1, CvType.CV_32FC3);
+				color.push_back(dummy);
+				count++;
+			}
+		}
+		correspondence_idx.add(right_idx);
+		pc.fromList(pclist);
+		kp2.fromList(right_inPC);
+		Mat rotvec = new Mat(3, 1, CvType.CV_64F);
+		Mat rot = new Mat(3, 3, CvType.CV_64F);
+		Mat t = new Mat(3, 1, CvType.CV_64F);
+		Calib3d.solvePnP(pc, kp2, cameraMat, new MatOfDouble(), rotvec, t);
+		kp1.fromList(leftlist);
+		kp2.fromList(rightist);
+		Calib3d.Rodrigues(rotvec, rot);
+		Mat P = computeProjMat(cameraMat, rot, t);
+		Mat pc_raw = new Mat();
+		System.out.println(LastP.dump());
+		Calib3d.triangulatePoints(P,LastP, kp2, kp1, pc_raw);
+		Mat new_PC = divideLast(pc_raw);
+		pointCloud.push_back(new_PC);
+		LastP = P.clone();
 		return pointCloud.clone();
 	}
 
@@ -151,92 +217,6 @@ public class Reconstruction {
 			pc.push_back(col.t());
 		}
 		return pc.colRange(0, 3);
-	}
-
-	/**
-	 * 向点云中添加一副图片
-	 * 
-	 * @param left
-	 * @param right
-	 * @param gm
-	 * @param img
-	 * @return
-	 */
-	public Mat addImage(ImageData left, ImageData right, MatOfDMatch gm, Mat img) {
-		MatOfPoint3f pc3f = Format.Mat2MatOfPoint3f(pointCloud); // 点云Point3f
-		MatOfKeyPoint leftPoint = left.getKeyPoint(); // 左图原关键点列表
-		MatOfKeyPoint rightPoint = right.getKeyPoint(); // 右图原关键点列表
-		LinkedList<Point3> pclist = new LinkedList<>();
-		LinkedList<Point> right_inPC = new LinkedList<>();
-		LinkedList<Point> leftlist = new LinkedList<>();
-		LinkedList<Point> rightist = new LinkedList<>();
-		MatOfPoint3f pc = new MatOfPoint3f();
-		MatOfPoint2f kp1 = new MatOfPoint2f();
-		MatOfPoint2f kp2 = new MatOfPoint2f();
-		int count = pointCloud.height(); // 点云点数
-		int[] left_idx = correspondence_idx.get(correspondence_idx.size() - 1);
-		int[] right_idx = new int[rightPoint.height()];
-		Arrays.fill(right_idx, -1);
-		for (int i = 0; i < gm.toList().size(); i++) {
-			if (left_idx[gm.toList().get(i).queryIdx] >= 0) {
-				pclist.addLast(pc3f.toList().get(left_idx[gm.toList().get(i).queryIdx]));
-				right_inPC.addLast(rightPoint.toList().get(gm.toList().get(i).trainIdx).pt);
-				right_idx[gm.toList().get(i).trainIdx] = left_idx[gm.toList().get(i).queryIdx];
-			} else {
-				leftlist.addLast(leftPoint.toList().get(gm.toList().get(i).queryIdx).pt);
-				rightist.addLast(rightPoint.toList().get(gm.toList().get(i).trainIdx).pt);
-				left_idx[gm.toList().get(i).queryIdx] = count;
-				right_idx[gm.toList().get(i).trainIdx] = count;
-				int y = (int) rightPoint.toList().get(gm.toList().get(i).trainIdx).pt.y;
-				int x = (int) rightPoint.toList().get(gm.toList().get(i).trainIdx).pt.x;
-				double[] tmp = img.get(y, x);
-				tmp[0] *= scale;
-				tmp[1] *= scale;
-				tmp[2] *= scale;
-				Mat dummy = new Mat(1, 1, CvType.CV_32FC3);
-				color.push_back(dummy);
-				count++;
-			}
-		}
-		pc.fromList(pclist);
-		kp2.fromList(right_inPC);
-		Mat rotvec = new Mat(3, 1, CvType.CV_64F);
-		Mat rot = new Mat(3, 3, CvType.CV_64F);
-		Mat t = new Mat(3, 1, CvType.CV_64F);
-		Calib3d.solvePnPRansac(pc, kp2, cameraMat, new MatOfDouble(), rotvec, t);
-		kp1.fromList(leftlist);
-		kp2.fromList(rightist);
-		Calib3d.Rodrigues(rotvec, rot);
-		Mat P = computeProjMat(cameraMat, rot, t);
-		Mat pc_raw = new Mat();
-		Calib3d.triangulatePoints(LastP, P, kp1, kp2, pc_raw);
-
-		System.out.println(pc_raw.dump());
-
-		Mat new_PC = divideLast(pc_raw);
-		pointCloud.push_back(new_PC);
-		LastP = P.clone();
-		return pointCloud.clone();
-	}
-
-	void reconstruct(Mat K, Mat R, Mat T, MatOfPoint2f p1, MatOfPoint2f p2, Mat structure) {
-		// 两个相机的投影矩阵[R T]，triangulatePoints只支持float型
-		Mat proj1 = new Mat(3, 4, CvType.CV_32FC1);
-		Mat proj2 = new Mat(3, 4, CvType.CV_32FC1);
-
-		proj1.colRange(0, 3).setTo(Mat.eye(3, 3, CvType.CV_32FC1));
-		proj1.col(3).setTo(Mat.zeros(3, 1, CvType.CV_32FC1));
-
-		R.convertTo(proj2.colRange(0, 3), CvType.CV_32FC1);
-		T.convertTo(proj2.col(3), CvType.CV_32FC1);
-
-		Mat fK = new Mat();
-		K.convertTo(fK, CvType.CV_32FC1);
-		proj1 = fK.mul(proj1);
-		proj2 = fK.mul(proj2);
-
-		// 三角化重建
-		Calib3d.triangulatePoints(proj1, proj2, p1, p2, structure);
 	}
 
 	public Mat getPointCloud() {

@@ -1,7 +1,9 @@
 package tool;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,13 +64,30 @@ public class UI {
 			BufferedReader fin = new BufferedReader(new FileReader(filePath));
 			while (true) {
 				String img_path = fin.readLine();
-				if (img_path != null) {
+				if (img_path != null&&img_path!="") {
 					Mat imageInput = Imgcodecs.imread(img_path);
 					imageList.add(imageInput.clone());
 				} else {
 					break;
 				}
 			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * 从图像列表读取所有图片，并加入最后一张，返回List<Mat>
+	 * 
+	 * @param filePath  图像列表的存储路径
+	 * @param imageList 返回获取到的帧的列表，存入imageList
+	 */
+	public static void writePointCloud(String filePath,Mat pointCloud) {
+		try {
+			BufferedWriter fout = new BufferedWriter(new FileWriter(filePath));
+			fout.write(pointCloud.dump());
+			fout.flush();
+			fout.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
