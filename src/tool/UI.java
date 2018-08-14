@@ -140,10 +140,10 @@ public class UI {
 	}
 	
 	/**
-	 * 从图像列表读取所有图片，并加入最后一张，返回List<Mat>
+	 * 将三维重建的点云结果写出到文件
 	 * 
-	 * @param filePath  图像列表的存储路径
-	 * @param imageList 返回获取到的帧的列表，存入imageList
+	 * @param filePath  点云文件的存储路径
+	 * @param pointCloud 点云列表
 	 */
 	public static void writePointCloud(String filePath,Mat pointCloud) {
 		try {

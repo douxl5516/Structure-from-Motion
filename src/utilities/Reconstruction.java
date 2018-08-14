@@ -42,7 +42,8 @@ public class Reconstruction {
 		System.out.println("点云size:" + pointCloud.size());
 //		System.out.println(pointCloud.dump());
 		for (int i = 1; i < matchesList.size(); i++) {
-			addImage(imageDataList.get(i), imageDataList.get(i + 1), matchesList.get(i).getMatches(),imageList.get(i + 1));
+			addImage(imageDataList.get(i), imageDataList.get(i + 1), matchesList.get(i).getMatches(),
+					imageList.get(i + 1));
 			System.out.println("点云size:" + pointCloud.size());
 		}
 		UI.writePointCloud("output\\pointcloud.txt", pointCloud);
@@ -116,41 +117,106 @@ public class Reconstruction {
 	/**
 	 * 向点云中添加一副图片
 	 * 
-	 * @param left 左图相关信息
+	 * @param left  左图相关信息
 	 * @param right 右图相关信息
-	 * @param gm 匹配点对
-	 * @param img 取颜色的图像
+	 * @param gm    匹配点对
+	 * @param img   取颜色的图像
 	 * @return 重建后的三维点云
 	 */
 	private Mat addImage(ImageData left, ImageData right, MatOfDMatch matches, Mat img) {
 		MatOfPoint3f pc3f = Format.Mat2MatOfPoint3f(pointCloud); // 原有的点云的Point3f
 		MatOfKeyPoint leftPoint = left.getKeyPoint(); // 左图原关键点列表
 		MatOfKeyPoint rightPoint = right.getKeyPoint(); // 右图原关键点列表
-		LinkedList<Point3> pclist = new LinkedList<>();	//新的点云列表
-		LinkedList<Point> right_inPC = new LinkedList<>(); //在点云中的右图的关键点列表
-		LinkedList<Point> leftlist = new LinkedList<>();//在匹配队列中的左图特征点
-		LinkedList<Point> rightist = new LinkedList<>();//在匹配队列中的右图特征点
+		LinkedList<Point3> pclist = new LinkedList<>(); // 新的点云列表
+		LinkedList<Point> right_inPC = new LinkedList<>(); // 在点云中的右图的关键点列表
+		LinkedList<Point> leftlist = new LinkedList<>();// 在匹配队列中的左图特征点
+		LinkedList<Point> rightist = new LinkedList<>();// 在匹配队列中的右图特征点
 		MatOfPoint3f pc = new MatOfPoint3f();
 		MatOfPoint2f kp1 = new MatOfPoint2f();
 		MatOfPoint2f kp2 = new MatOfPoint2f();
 		int count = pointCloud.height(); // 点云点数
-		int[] left_idx = correspondence_idx.get(correspondence_idx.size() - 1); //最后一张图像的匹配索引
+		int[] left_idx = correspondence_idx.get(correspondence_idx.size() - 1); // 最后一张图像的匹配索引
 		int[] right_idx = new int[rightPoint.height()];
 		Arrays.fill(right_idx, -1);
-		
+
 		for (int i = 0; i < matches.toList().size(); i++) {
-			DMatch match= matches.toList().get(i);
-			if (left_idx[match.queryIdx] >= 0) { //如果新提供的匹配序列的左点在原有匹配序列中
-				pclist.addLast(pc3f.toList().get(left_idx[match.queryIdx]));//把原有点云中的该点添加到新的点云中
+			DMatch match = matches.toList().get(i);
+			if (left_idx[match.queryIdx] >= 0) { // 如果新提供的匹配序列的左点在原有匹配序列中
+				pclist.addLast(pc3f.toList().get(left_idx[match.queryIdx]));// 把原有点云中的该点添加到新的点云中
 				right_inPC.addLast(rightPoint.toList().get(match.trainIdx).pt);
 				right_idx[match.trainIdx] = left_idx[match.queryIdx];
-			} else {//如果新提供的匹配序列的左点不在原有匹配序列中
+			} else {// 如果新提供的匹配序列的左点不在原有匹配序列中
 				leftlist.addLast(leftPoint.toList().get(match.queryIdx).pt);
 				rightist.addLast(rightPoint.toList().get(match.trainIdx).pt);
 				left_idx[match.queryIdx] = count;
 				right_idx[match.trainIdx] = count;
 				Point pt = rightPoint.toList().get(match.trainIdx).pt;
-				double[] tmp = img.get((int)pt.y, (int)pt.x);
+				double[] tmp = img.get((int) pt.y, (int) pt.x);
+				tmp[0] *= scale;
+				tmp[1] *= scale;
+				tmp[2] *= scale;
+				Mat dummy = new Mat(1, 1, CvType.CV_32FC3);
+				color.push_back(dummy);
+				count++;
+			}
+		}
+		correspondence_idx.add(right_idx);
+		pc.fromList(pclist);
+		kp2.fromList(right_inPC);
+		Mat rotvec = new Mat(3, 1, CvType.CV_64F);
+		Mat rot = new Mat(3, 3, CvType.CV_64F);
+		Mat t = new Mat(3, 1, CvType.CV_64F);
+		Calib3d.solvePnP(pc, kp2, cameraMat, new MatOfDouble(), rotvec, t);
+		kp1.fromList(leftlist);
+		kp2.fromList(rightist);
+		Calib3d.Rodrigues(rotvec, rot);
+		Mat P = computeProjMat(cameraMat, rot, t);
+		Mat pc_raw = new Mat();
+		Calib3d.triangulatePoints(LastP, P, kp1, kp2, pc_raw);
+		Mat new_PC = divideLast(pc_raw);
+		pointCloud.push_back(new_PC);
+		LastP = P.clone();
+		return pointCloud.clone();
+	}
+
+	/**
+	 * 推测相机位置
+	 * 
+	 * @param left    最后一张图像
+	 * @param right   经过变换后的目标图像
+	 * @param matches 匹配列表
+	 * @param img     用于取颜色的图像
+	 * @return 相机的外参矩阵
+	 */
+	public Mat reckon(ImageData left, ImageData right, MatOfDMatch matches, Mat img) {
+		MatOfPoint3f pc3f = Format.Mat2MatOfPoint3f(pointCloud); // 原有的点云的Point3f
+		MatOfKeyPoint leftPoint = left.getKeyPoint(); // 左图原关键点列表
+		MatOfKeyPoint rightPoint = right.getKeyPoint(); // 右图原关键点列表
+		LinkedList<Point3> pclist = new LinkedList<>(); // 新的点云列表
+		LinkedList<Point> right_inPC = new LinkedList<>(); // 在点云中的右图的关键点列表
+		LinkedList<Point> leftlist = new LinkedList<>();// 在匹配队列中的左图特征点
+		LinkedList<Point> rightist = new LinkedList<>();// 在匹配队列中的右图特征点
+		MatOfPoint3f pc = new MatOfPoint3f();
+		MatOfPoint2f kp1 = new MatOfPoint2f();
+		MatOfPoint2f kp2 = new MatOfPoint2f();
+		int count = pointCloud.height(); // 点云点数
+		int[] left_idx = correspondence_idx.get(correspondence_idx.size() - 1); // 最后一张图像的匹配索引
+		int[] right_idx = new int[rightPoint.height()];
+		Arrays.fill(right_idx, -1);
+
+		for (int i = 0; i < matches.toList().size(); i++) {
+			DMatch match = matches.toList().get(i);
+			if (left_idx[match.queryIdx] >= 0) { // 如果新提供的匹配序列的左点在原有匹配序列中
+				pclist.addLast(pc3f.toList().get(left_idx[match.queryIdx]));// 把原有点云中的该点添加到新的点云中
+				right_inPC.addLast(rightPoint.toList().get(match.trainIdx).pt);
+				right_idx[match.trainIdx] = left_idx[match.queryIdx];
+			} else {// 如果新提供的匹配序列的左点不在原有匹配序列中
+				leftlist.addLast(leftPoint.toList().get(match.queryIdx).pt);
+				rightist.addLast(rightPoint.toList().get(match.trainIdx).pt);
+				left_idx[match.queryIdx] = count;
+				right_idx[match.trainIdx] = count;
+				Point pt = rightPoint.toList().get(match.trainIdx).pt;
+				double[] tmp = img.get((int) pt.y, (int) pt.x);
 				tmp[0] *= scale;
 				tmp[1] *= scale;
 				tmp[2] *= scale;
@@ -212,7 +278,7 @@ public class Reconstruction {
 		}
 		return pc.colRange(0, 3);
 	}
-	
+
 	public Mat getPointCloud() {
 		return pointCloud;
 	}

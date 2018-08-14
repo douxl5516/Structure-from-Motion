@@ -1,3 +1,2 @@
 CVdata/sfm_avatar/0000.JPG
 CVdata/sfm_avatar/0001.JPG
-CVdata/sfm_avatar/0002.JPG

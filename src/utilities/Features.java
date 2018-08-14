@@ -45,6 +45,27 @@ public class Features {
 	}
 
 	/**
+	 * 新增特征点
+	 * 
+	 * @param img           经过投影变换后的图像
+	 * @param imageList     图像列表
+	 * @param imageDataList 图像信息列表
+	 * @param matchesList   匹配信息列表
+	 */
+	public static void addFeatures(Mat img, List<Mat> imageList, List<ImageData> imageDataList,
+			List<MatchInfo> matchesList) {
+		imageList.add(img);
+		ImageData temp = detectFeature(img);
+		System.out.println("新检测到" + temp.getKeyPoint().height() + "个特征点");
+		imageDataList.add(temp);
+
+		MatchInfo matches = null;
+		matches = matchFeatures(imageDataList.get(imageDataList.size() - 2), temp);
+		System.out.println("新加入的图像与最后一张图像检测出" + matches.getMatches().height() + "个匹配点对");
+		matchesList.add(matches);
+	}
+
+	/**
 	 * 特征点匹配函数
 	 * 
 	 * @param imageDataForAll 检测出的图片特征点描述子所在的列表
@@ -115,7 +136,7 @@ public class Features {
 		MatOfDMatch goodMatch = new MatOfDMatch();
 		goodMatch.fromList(goodMatchesList);
 
-		return MatchInfo.newInstance(goodMatch, F,inliner);
+		return MatchInfo.newInstance(goodMatch, F, inliner);
 	}
 
 	/**
