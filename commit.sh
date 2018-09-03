@@ -1,3 +1,3 @@
 git add .
-git commit -m '实现了较好的三维重建效果'
+git commit -m '更改了readme.md'
 git push -u origin dev
