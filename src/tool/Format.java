@@ -91,13 +91,13 @@ public class Format {
      */
     public static MatOfPoint3f Mat2MatOfPoint3f(Mat m) {
 		MatOfPoint3f points = new MatOfPoint3f();
-		LinkedList<Point3> ptlist = new LinkedList<>();
-		Point3 pt = new Point3();
+		LinkedList<Point3> ptlist = new LinkedList<Point3>();
 		Mat doubleM = new Mat();
 		m.convertTo(doubleM, CvType.CV_64F);
 		for (int i = 0; i < m.height(); i++) {
+			Point3 pt = new Point3();
 			double[] tmp = new double[3];
-			doubleM.get(0, 0, tmp);
+			doubleM.get(i, 0, tmp);
 			pt.set(tmp);
 			ptlist.add(pt);
 		}
