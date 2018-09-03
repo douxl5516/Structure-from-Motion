@@ -31,21 +31,25 @@ public class Reconstruction {
 	private Mat color;
 	private Mat LastP; // 最后一张图像的外参矩阵
 	private ArrayList<int[]> correspondence_idx = new ArrayList<>();
-
+	List<Mat> imageList;
+	List<ImageData> imageDataList;
+	List<MatchInfo> matchesList;
 	private final float scale = 1 / 256;
 
-	public Reconstruction(Mat cameraMat, List<Mat> imageList, List<ImageData> imageDataList,
-			List<MatchInfo> matchesList) {
+	public Reconstruction(Mat cameraMat, List<Mat> imageList, List<ImageData> imageDataList,List<MatchInfo> matchesList) {
 		this.cameraMat = cameraMat;
-
+		this.imageList=imageList;
+		this.imageDataList=imageDataList;
+		this.matchesList=matchesList;
+	}
+	
+	public void runSfM() {
 		InitStructure(imageDataList.get(0), imageDataList.get(1), matchesList.get(0).getMatches(), imageList.get(1));
 		System.out.println("点云size:" + pointCloud.size());
-//		System.out.println(pointCloud.dump());
-		for (int i = 1; i < matchesList.size(); i++) {
-			addImage(imageDataList.get(i), imageDataList.get(i + 1), matchesList.get(i).getMatches(),
-					imageList.get(i + 1));
-			System.out.println("点云size:" + pointCloud.size());
-		}
+//		for (int i = 1; i < matchesList.size(); i++) {
+//			addImage(imageDataList.get(i), imageDataList.get(i + 1), matchesList.get(i).getMatches(),imageList.get(i + 1));
+//			System.out.println("点云size:" + pointCloud.size());
+//		}
 		UI.writePointCloud("output\\pointcloud.txt", pointCloud);
 	}
 
@@ -66,7 +70,7 @@ public class Reconstruction {
 		Mat t1 = Mat.zeros(3, 1, CvType.CV_64F); // 左图相机平移矩阵
 		Mat rot2 = new Mat(3, 3, CvType.CV_64F); // 右图相机旋转矩阵
 		Mat t2 = new Mat(3, 1, CvType.CV_64F); // 右图相机平移矩阵
-
+		Mat mask=new Mat();
 		LinkedList<Point> ptlist1 = new LinkedList<>(); // 经匹配后的左图特征点列表
 		LinkedList<Point> ptlist2 = new LinkedList<>(); // 经匹配后的右图特征点列表
 		MatOfPoint2f kp1 = new MatOfPoint2f();
@@ -81,36 +85,35 @@ public class Reconstruction {
 			DMatch match = gm.toList().get(i);
 			ptlist1.addLast(leftPoint.toList().get(match.queryIdx).pt);
 			ptlist2.addLast(rightPoint.toList().get(match.trainIdx).pt);
-			left_idx[match.queryIdx] = i;
-			right_idx[match.trainIdx] = i;
-
-			// 取第i对匹配点中右图的点坐标作为颜色的取值
-			Point pt = rightPoint.toList().get(match.trainIdx).pt;
-			double[] tmp = img.get((int) pt.y, (int) pt.x);
-			tmp[0] *= scale;
-			tmp[1] *= scale;
-			tmp[2] *= scale;
-			color.put(i, 0, tmp);
 		}
-		correspondence_idx.add(left_idx);
-		correspondence_idx.add(right_idx);
 		kp1.fromList(ptlist1);
 		kp2.fromList(ptlist2);
-
-		Mat E = Calib3d.findEssentialMat(kp1, kp2, cameraMat);
-		Calib3d.recoverPose(E, kp1, kp2, cameraMat, rot2, t2);
-
+		Mat E = Calib3d.findEssentialMat(kp1, kp2, cameraMat,Calib3d.RANSAC,0.999,1.0,mask);
+		Calib3d.recoverPose(E, kp1, kp2, cameraMat, rot2, t2,mask);
+		maskoutPoints(ptlist1, mask);
+		maskoutPoints(ptlist2, mask);
 		kp1.release();
 		kp2.release();
 		kp1.fromList(ptlist1);
 		kp2.fromList(ptlist1);
-
 		Mat P1 = computeProjMat(cameraMat, rot1, t1);
 		Mat P2 = computeProjMat(cameraMat, rot2, t2);
+		left.setProj(P1.clone());
+		right.setProj(P2.clone());
 		Mat pc_raw = new Mat();
 		Calib3d.triangulatePoints(P1, P2, kp1, kp2, pc_raw);
 		pointCloud = divideLast(pc_raw);
 		LastP = P2.clone();
+		
+		int idx=0;
+		for (int i = 0; i < gm.toList().size(); i++) {
+			if(mask.get(i, 0)[0]==0)
+				continue;
+			DMatch match = gm.toList().get(i);
+			left_idx[match.queryIdx]=i;
+			right_idx[match.trainIdx]=i;
+		}
+		
 		return pointCloud.clone();
 	}
 
@@ -236,12 +239,7 @@ public class Reconstruction {
 		kp2.fromList(rightist);
 		Calib3d.Rodrigues(rotvec, rot);
 		Mat P = computeProjMat(cameraMat, rot, t);
-		Mat pc_raw = new Mat();
-		Calib3d.triangulatePoints(LastP, P, kp1, kp2, pc_raw);
-		Mat new_PC = divideLast(pc_raw);
-		pointCloud.push_back(new_PC);
-		LastP = P.clone();
-		return pointCloud.clone();
+		return P;
 	}
 
 	/**
@@ -279,6 +277,23 @@ public class Reconstruction {
 		return pc.colRange(0, 3);
 	}
 
+	/**
+	 * 将mask相应位置为1的点筛出
+	 * 
+	 * @param ptlist 待筛选的点列表
+	 * @param mask mask的Mat，0代表不匹配，需要去除，1表示匹配，需要保留
+	 */
+	private void maskoutPoints(List<Point> ptlist,Mat mask) {
+		LinkedList<Point> copy=new LinkedList<Point>();
+		copy.addAll(ptlist);
+		ptlist.clear();
+		for(int i=0;i<mask.height();i++) {
+			if(mask.get(i, 0)[0]>0) {
+				ptlist.add(copy.get(i));
+			}
+		}
+	}
+	
 	public Mat getPointCloud() {
 		return pointCloud;
 	}

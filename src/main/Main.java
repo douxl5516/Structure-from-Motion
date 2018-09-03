@@ -41,8 +41,8 @@ public class Main {
 		List<MatchInfo> matchesList = new LinkedList<MatchInfo>();
 
 		// 从视频或图像列表读取图像
-		UI.getOptimalizedMatListFromVideo(VIDEO_FILE_NAME, SKIP_FRAME_NUMBER, SAMPLE_SIZE, imageList);
-//		UI.getMatListFromImgList(IMG_LIST_FILE_NAME, imageList);
+//		UI.getOptimalizedMatListFromVideo(VIDEO_FILE_NAME, SKIP_FRAME_NUMBER, SAMPLE_SIZE, imageList);
+		UI.getMatListFromImgList(IMG_LIST_FILE_NAME, imageList);
 		lastImage = imageList.get(imageList.size() - 1);
 		// 展示读取出来的图片
 //		 for (Mat img : imageList) new ImageUI(img,"images").imshow().waitKey(0);
@@ -50,8 +50,8 @@ public class Main {
 
 		// 相机标定
 //		CameraModel cm = new CameraModel(CALIB_LIST_FILE_NAME);
-		CameraModel cm = new CameraModel(
-				new MatOfDouble(2759.48, 0, 1520.69, 0, 2764.16, 1006.81, 0, 0, 1).reshape(1, 3));
+//		CameraModel cm = new CameraModel(new MatOfDouble(2759.48, 0, 1520.69, 0, 2764.16, 1006.81, 0, 0, 1).reshape(1, 3));
+		CameraModel cm = new CameraModel(new MatOfDouble(2500, 0, lastImage.cols()/2, 0, 2500, lastImage.rows()/2, 0, 0, 1).reshape(1, 3));
 
 		// 特征点检测
 		Features.extractFeatures(imageList, imageDataList);
@@ -74,15 +74,18 @@ public class Main {
 
 		// 三维重建
 		Reconstruction r = new Reconstruction(cm.getCameraMatrix(), imageList, imageDataList, matchesList);
+		
+		r.runSfM();
 
-		ImageUI transform = new ImageUI(lastImage, "图像变换");
-		transform.getTargetImage();
-		while (perspectiveImage.width() == 0) {
-			perspectiveImage = transform.getRes().clone();
-		}
+//		ImageUI transform = new ImageUI(lastImage, "图像变换");
+//		transform.getTargetImage();
+//		while (perspectiveImage.width() == 0) {
+//			perspectiveImage = transform.getRes().clone();
+//		}
 
-		Features.addFeatures(perspectiveImage, imageList, imageDataList, matchesList);
-		Mat P = r.reckon(imageDataList.get(imageDataList.size() - 2), imageDataList.get(imageDataList.size() - 1),matchesList.get(matchesList.size() - 1).getMatches(), imageList.get(imageList.size() - 1));
-		System.out.println("想要达到目标图像，相机外参需要为：" + P.dump());
+//		Features.addFeatures(perspectiveImage, imageList, imageDataList, matchesList);
+//		Mat P = r.reckon(imageDataList.get(imageDataList.size() - 2), imageDataList.get(imageDataList.size() - 1),matchesList.get(matchesList.size() - 1).getMatches(), imageList.get(imageList.size() - 1));
+//		System.out.println("想要达到目标图像，相机外参需要为：" + P.dump());
+
 	}
 }

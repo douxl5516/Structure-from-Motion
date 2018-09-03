@@ -46,6 +46,7 @@ public class ImageUI extends JPanel implements KeyListener, MouseListener {
 	}
 
 	public Mat getTargetImage() {
+		System.out.println("请在图像上选出进行透视变换所用的四点");
 		if (firstPaint) {
 			jframe.setVisible(true);
 			firstPaint = false;
