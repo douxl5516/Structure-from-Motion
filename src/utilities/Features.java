@@ -132,7 +132,7 @@ public class Features {
 		kp1.fromList(points1);
 		kp2.fromList(points2);
 		Mat inliner = new Mat();
-		Mat F = findFundamentalMat(kp1, kp2, FM_RANSAC, 3, 0.99, inliner);// 基础矩阵描述是三维场景中的像点之间的对应关系
+		Mat F = findFundamentalMat(kp1, kp2, FM_RANSAC, 3, 0.999, inliner);// 基础矩阵描述是三维场景中的像点之间的对应关系
 		MatOfDMatch goodMatch = new MatOfDMatch();
 		goodMatch.fromList(goodMatchesList);
 

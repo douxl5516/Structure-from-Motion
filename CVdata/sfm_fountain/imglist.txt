@@ -1,2 +1,4 @@
 CVdata/sfm_fountain/0003.jpg
 CVdata/sfm_fountain/0004.jpg
+CVdata/sfm_fountain/0005.jpg
+CVdata/sfm_fountain/0006.jpg

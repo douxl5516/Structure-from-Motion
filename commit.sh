@@ -1,3 +1,3 @@
 git add .
-git commit -m '更正了solvePnP计算错误的问题'
+git commit -m '实现了较好的三维重建效果'
 git push -u origin dev
