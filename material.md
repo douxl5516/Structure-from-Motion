@@ -12,6 +12,10 @@
 - [OpenCV实现SfM（三）：多目三维重建](https://blog.csdn.net/aichipmunk/article/details/51232861)
 - [OpenCV实现SfM（四）：Bundle Adjustment](https://blog.csdn.net/aichipmunk/article/details/52433884)
 
+### 十分详细的SfM过程
+
+- [使用OpenCV探测来至运动的结构](https://blog.csdn.net/zhazhiqiang/article/details/42740429)
+
 ### 求解经验、方法及知识总结
 - [SfM总结二](https://blog.csdn.net/aaron121211/article/details/52265851)
 
@@ -33,7 +37,11 @@
 - [佛像图片数据集](https://github.com/alicevision/dataset_buddha)
 - [SfM_quality_evaluation（含相机内参和重建结果）](https://github.com/alicevision/SfM_quality_evaluation)
 - [Middlebury数据集（含相机内参和重建结果）](http://vision.middlebury.edu/mview/data/)
-- [ComputerVisionDatasets(最全最多)](https://github.com/AIBluefisher/ComputerVisionDatasets)
+- [ComputerVisionDatasets](https://github.com/AIBluefisher/ComputerVisionDatasets)
+- [CVonline:ImageDatabases(最大最全)](http://homepages.inf.ed.ac.uk/rbf/CVonline/Imagedbase.htm)
+- [Network Principles for SfM: Disambiguating Repeated Structures with Local Context](http://www.cs.cornell.edu/projects/disambig/)
+- [1DSFM](http://www.cs.cornell.edu/projects/1dsfm/)
+- 
 
 ## 三维重建点云效果的查看 
 - [C++ PCL库:PCLVisualizer](http://docs.pointclouds.org/trunk/classpcl_1_1visualization_1_1_p_c_l_visualizer.html)
