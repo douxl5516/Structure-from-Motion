@@ -46,3 +46,10 @@
 ## 三维重建点云效果的查看 
 - [C++ PCL库:PCLVisualizer](http://docs.pointclouds.org/trunk/classpcl_1_1visualization_1_1_p_c_l_visualizer.html)
 - [OpenCV自带viz](https://docs.opencv.org/master/de/dfd/tutorial_sfm_import_reconstruction.html)
+
+## 论文写作翻译工具
+
+- [Google翻译](https://translate.google.cn/)
+- [bcc语料库](http://bcc.blcu.edu.cn/zh/cid/4)
+- [cnki翻译助手](http://dict.cnki.net/dict_result.aspx)
+
