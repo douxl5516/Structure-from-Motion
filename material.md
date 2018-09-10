@@ -41,7 +41,9 @@
 - [CVonline:ImageDatabases(最大最全)](http://homepages.inf.ed.ac.uk/rbf/CVonline/Imagedbase.htm)
 - [Network Principles for SfM: Disambiguating Repeated Structures with Local Context](http://www.cs.cornell.edu/projects/disambig/)
 - [1DSFM](http://www.cs.cornell.edu/projects/1dsfm/)
-- 
+- [瑞士联邦理工学院数据集](https://cvlab.epfl.ch/data/strechamvs)
+- [Crazy Horse 数据集](https://github.com/royshil/SfM-Toy-Library/tree/master/dataset/crazyhorse)
+- [BigSFM Dataset](http://www.cs.cornell.edu/projects/bigsfm/)
 
 ## 三维重建点云效果的查看 
 - [C++ PCL库:PCLVisualizer](http://docs.pointclouds.org/trunk/classpcl_1_1visualization_1_1_p_c_l_visualizer.html)

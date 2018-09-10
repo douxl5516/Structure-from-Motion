@@ -1,0 +1,7 @@
+CVdata/rathaus/rdimage.000.ppm
+CVdata/rathaus/rdimage.001.ppm
+CVdata/rathaus/rdimage.002.ppm
+CVdata/rathaus/rdimage.003.ppm
+CVdata/rathaus/rdimage.004.ppm
+CVdata/rathaus/rdimage.005.ppm
+CVdata/rathaus/rdimage.006.ppm

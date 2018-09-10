@@ -29,6 +29,7 @@ public class Main {
 //	private static final String IMG_LIST_FILE_NAME = "CVdata\\sfm_entry\\imglist.txt";
 //	private static final String IMG_LIST_FILE_NAME = "CVdata\\sift\\imglist.txt";
 //	private static final String IMG_LIST_FILE_NAME = "CVdata\\sfm_dom\\imglist.txt";
+//	private static final String IMG_LIST_FILE_NAME = "CVdata\\rathaus\\imglist.txt";
 	private static final String IMG_LIST_FILE_NAME = "CVdata\\sfm_avatar\\imglist.txt";
 //	private static final String CALIB_LIST_FILE_NAME = "CVdata\\zhang_calib\\calibdata.txt";
 
@@ -50,8 +51,8 @@ public class Main {
 
 		// 相机标定
 //		CameraModel cm = new CameraModel(CALIB_LIST_FILE_NAME);
-		CameraModel cm = new CameraModel(new MatOfDouble(2759.48, 0, 1520.69, 0, 2764.16, 1006.81, 0, 0, 1).reshape(1, 3));
-//		CameraModel cm = new CameraModel(new MatOfDouble(2500, 0, lastImage.cols()/2, 0, 2500, lastImage.rows()/2, 0, 0, 1).reshape(1, 3));
+//		CameraModel cm = new CameraModel(new MatOfDouble(2759.48, 0, 1520.69, 0, 2764.16, 1006.81, 0, 0, 1).reshape(1, 3));
+		CameraModel cm = new CameraModel(new MatOfDouble(2500, 0, lastImage.cols()/2, 0, 2500, lastImage.rows()/2, 0, 0, 1).reshape(1, 3));
 
 		// 特征点检测
 		Features.extractFeatures(imageList, imageDataList);
